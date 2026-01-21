@@ -1,6 +1,9 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:thermal_mobile/core/constants/themes.dart';
+import 'package:thermal_mobile/core/services/firebase_messaging_service.dart';
+import 'package:thermal_mobile/firebase_options.dart';
 import 'package:thermal_mobile/presentation/bloc/user/user_bloc.dart';
 import 'package:thermal_mobile/presentation/navigation/main_shell.dart';
 import 'package:thermal_mobile/presentation/routes/app_routes.dart';
@@ -12,7 +15,31 @@ late GlobalKey<NavigatorState> _navigatorKey;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Firebase
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Setup background message handler
+  // FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
   await configureDependencies();
+
+  // Initialize Firebase Messaging
+  final messagingService = FirebaseMessagingService();
+  await messagingService.initialize();
+
+  // Setup notification tap handler
+  messagingService.onNotificationTap = (data) {
+    debugPrint('Notification tapped with data: $data');
+    // Handle navigation based on notification data
+    // Example: Navigate to specific screen based on notification type
+  };
+
+  // Setup token refresh handler - send to backend
+  messagingService.onTokenRefresh = (token) {
+    debugPrint('New FCM token: $token');
+    // TODO: Send token to your backend server
+  };
 
   // Decide initial screen based on cached session
   final authRepo = getIt<AuthRepository>();
@@ -36,9 +63,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider<UserBloc>(
-          create: (context) => getIt<UserBloc>(),
-        ),
+        BlocProvider<UserBloc>(create: (context) => getIt<UserBloc>()),
         // Thêm các BLoC khác ở đây nếu cần
       ],
       child: MaterialApp(
@@ -59,11 +84,9 @@ class MyApp extends StatelessWidget {
 void navigateToLogin() {
   _navigatorKey.currentState?.pushAndRemoveUntil(
     MaterialPageRoute(
-      builder: (context) => LoginScreen(
-        authRepository: getIt<AuthRepository>(),
-      ),
+      builder: (context) =>
+          LoginScreen(authRepository: getIt<AuthRepository>()),
     ),
     (route) => false,
   );
 }
-

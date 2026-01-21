@@ -41,18 +41,22 @@ class WarningEventRepositoryImpl implements WarningEventRepository {
             ));
           },
           onSuccess: (response) {
-              final list = response ?? [];
+            final list = response?.data;
+            if (list == null) {
+              _logger.warning('Empty response from API');
+              return const Right([]);
+            }
 
-              final entities = list
-                  .map((dto) => WarningEventEntity(
-                        id: dto.id,
-                        code: dto.code,
-                        name: dto.name,
-                      ))
-                  .toList();
+            final entities = list
+                .map((dto) => WarningEventEntity(
+                      id: dto.id,
+                      code: dto.code,
+                      name: dto.name,
+                    ))
+                .toList();
 
-              _logger.info('Successfully fetched ${entities.length} warning events');
-              return Right(entities);
+            _logger.info('Successfully fetched ${entities.length} warning events');
+            return Right(entities);
           },
         );
     } catch (e, stackTrace) {

@@ -36,25 +36,34 @@ class WarningEventApiService {
 
   /// Get all warning events by type
   /// warningType: 1 = Thermal, 2 = AI
-  Future<ApiResult<List<WarningEventDto>>> getAllWarningEvents({
+  Future<ApiResult<ApiResponse<List<WarningEventDto>>>> getAllWarningEvents({
     required String accessToken,
     required int warningType,
   }) async {
     _logger.info('Fetching warning events: warningType=$warningType');
 
-    return _apiClient.send<List<WarningEventDto>>(
+    return _apiClient.send<ApiResponse<List<WarningEventDto>>>(
       request: (dio) => dio.get(
         _endpoints.all,
         queryParameters: {'warningType': warningType},
         options: _authorizedOptions(accessToken),
       ),
       mapper: (json) {
-        if (json is List) {
-          return json
-              .map((item) => WarningEventDto.fromJson(item as Map<String, dynamic>))
-              .toList();
+        if (json is Map<String, dynamic>) {
+          return ApiResponse<List<WarningEventDto>>.fromJson(
+            json,
+            fromJson: (data) {
+              if (data is List) {
+                return data
+                    .map((item) => WarningEventDto.fromJson(
+                        item as Map<String, dynamic>))
+                    .toList();
+              }
+              return <WarningEventDto>[];
+            },
+          );
         }
-        return <WarningEventDto>[];
+        throw Exception('Invalid response format');
       },
     );
   }

@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "495821575923",
+    "project_id": "flutter-camera-8ba66",
+    "storage_bucket": "flutter-camera-8ba66.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:495821575923:android:db38c5475c5d577a728986",
+        "android_client_info": {
+          "package_name": "com.example.flutter_camera"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCa2M4Z4fUTtTZjZ2qPmqW6-wpDPO5EEcM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:495821575923:android:ba15783d05b6a5f1728986",
+        "android_client_info": {
+          "package_name": "com.example.thermal_mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCa2M4Z4fUTtTZjZ2qPmqW6-wpDPO5EEcM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
