@@ -1,0 +1,4 @@
+# Ignore all generated test reports except README
+*
+!.gitignore
+!README.md
