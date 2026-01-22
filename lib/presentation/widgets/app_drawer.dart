@@ -85,17 +85,17 @@ class AppDrawer extends StatelessWidget {
                     Navigator.pushNamed(context, '/config');
                   },
                 ),
-                ListTile(
-                  leading: const Icon(Icons.notifications_active, color: Colors.white),
-                  title: const Text(
-                    'Vision Notifications',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.pushNamed(context, '/vision-notification');
-                  },
-                ),
+                // ListTile(
+                //   leading: const Icon(Icons.notifications_active, color: Colors.white),
+                //   title: const Text(
+                //     'Vision Notifications',
+                //     style: TextStyle(color: Colors.white),
+                //   ),
+                //   onTap: () {
+                //     Navigator.pop(context);
+                //     Navigator.pushNamed(context, '/vision-notification');
+                //   },
+                // ),
                 ListTile(
                   leading: const Icon(Icons.privacy_tip, color: Colors.white),
                   title: const Text(

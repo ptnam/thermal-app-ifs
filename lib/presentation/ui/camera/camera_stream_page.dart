@@ -78,9 +78,16 @@ class _CameraStreamPageState extends State<CameraStreamPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: Text(widget.cameraName),
+        backgroundColor: Colors.transparent,
         elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: Text(
+          widget.cameraName,
+          style: const TextStyle(color: Colors.white),
+        ),
         centerTitle: false,
       ),
       body: BlocBuilder<CameraStreamBloc, CameraStreamState>(
@@ -88,7 +95,9 @@ class _CameraStreamPageState extends State<CameraStreamPage> {
         builder: (context, state) {
           if (state is CameraStreamLoading) {
             return const Center(
-              child: CircularProgressIndicator(),
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
             );
           }
 
@@ -117,6 +126,7 @@ class _CameraStreamPageState extends State<CameraStreamPage> {
                       'Lỗi tải stream',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             fontWeight: FontWeight.bold,
+                            color: Colors.white,
                           ),
                       textAlign: TextAlign.center,
                     ),
@@ -124,7 +134,7 @@ class _CameraStreamPageState extends State<CameraStreamPage> {
                     Text(
                       state.message,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Colors.grey[600],
+                            color: Colors.grey[400],
                           ),
                       textAlign: TextAlign.center,
                     ),
@@ -152,14 +162,48 @@ class _CameraStreamPageState extends State<CameraStreamPage> {
               }
             });
 
-            return _buildStreamContent(context, state.cameraStream);
+            return _buildFullscreenVideo(context);
           }
 
           return const Center(
-            child: Text('Không có dữ liệu'),
+            child: Text(
+              'Không có dữ liệu',
+              style: TextStyle(color: Colors.white),
+            ),
           );
         },
       ),
+    );
+  }
+
+  Widget _buildFullscreenVideo(BuildContext context) {
+    return Center(
+      child: _videoController != null && _videoController!.value.isInitialized
+          ? SizedBox.expand(
+              child: FittedBox(
+                fit: BoxFit.contain,
+                child: SizedBox(
+                  width: _videoController!.value.size.width,
+                  height: _videoController!.value.size.height,
+                  child: VideoPlayer(_videoController!),
+                ),
+              ),
+            )
+          : Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Đang tải video...',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.grey[400],
+                      ),
+                ),
+              ],
+            ),
     );
   }
 

@@ -139,34 +139,26 @@ class _NotificationPageState extends State<NotificationPage> {
               actions: [
                 Builder(
                   builder: (context) {
-                    final tabIndex =
-                        DefaultTabController.of(context)?.index ?? 0;
                     return IconButton(
                       icon: const Icon(Icons.filter_list, color: Colors.white),
                       onPressed: () async {
+                        // Lấy tabIndex tại thời điểm nhấn button
+                        final tabIndex = DefaultTabController.of(context).index;
                         if (tabIndex == 0) {
                           final areaItems = await _getAreaItems();
                           final machineItems = await _getMachineItems(
                             _temperatureFilter.areaId,
                           );
-                          final result =
-                              await showDialog<TemperatureFilterParams>(
-                                context: context,
-                                builder: (context) => TemperatureFilterDialog(
-                                  initialParams: _temperatureFilter,
-                                  areaItems: areaItems,
-                                  machineItems: machineItems,
-                                ),
-                              );
+                          final result = await TemperatureFilterDialog.show(
+                            context: context,
+                            initialParams: _temperatureFilter,
+                            areaItems: areaItems,
+                            machineItems: machineItems,
+                            onAreaChanged: _getMachineItems,
+                          );
                           if (result != null) {
                             setState(() => _temperatureFilter = result);
                             // Gửi sự kiện filter cho NotificationBloc
-                            final bloc = context
-                                .findAncestorWidgetOfExactType<
-                                  _TemperatureThresholdTab
-                                >()
-                                ?.key;
-                            // Nếu không tìm thấy bloc, dùng context.read
                             context.read<NotificationBloc>().add(
                               LoadNotificationsEvent(
                                 queryParameters: {
@@ -190,16 +182,14 @@ class _NotificationPageState extends State<NotificationPage> {
                           );
                           final warningEventItems =
                               await _getWarningEventItems();
-                          final result =
-                              await showDialog<AIWarningFilterParams>(
-                                context: context,
-                                builder: (context) => AIWarningFilterDialog(
-                                  initialParams: _aiWarningFilter,
-                                  areaItems: areaItems,
-                                  cameraItems: cameraItems,
-                                  warningEventItems: warningEventItems,
-                                ),
-                              );
+                          final result = await AIWarningFilterDialog.show(
+                            context: context,
+                            initialParams: _aiWarningFilter,
+                            areaItems: areaItems,
+                            cameraItems: cameraItems,
+                            warningEventItems: warningEventItems,
+                            onAreaChanged: _getCameraItems,
+                          );
                           if (result != null) {
                             setState(() => _aiWarningFilter = result);
                             // Gửi sự kiện filter cho VisionNotificationBloc
@@ -252,8 +242,49 @@ class _NotificationPageState extends State<NotificationPage> {
 }
 
 /// Tab 1: Temperature Threshold (Notification List)
-class _TemperatureThresholdTab extends StatelessWidget {
+class _TemperatureThresholdTab extends StatefulWidget {
   const _TemperatureThresholdTab();
+
+  @override
+  State<_TemperatureThresholdTab> createState() =>
+      _TemperatureThresholdTabState();
+}
+
+class _TemperatureThresholdTabState extends State<_TemperatureThresholdTab> {
+  final ScrollController _scrollController = ScrollController();
+  NotificationBloc? _bloc;
+  bool _isLoadingMore = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_isBottom && _bloc != null && !_isLoadingMore) {
+      final state = _bloc!.state;
+      // Only load more if currently loaded and has more pages
+      if (state is NotificationListLoaded && state.list.hasNextPage) {
+        _isLoadingMore = true;
+        _bloc!.add(LoadMoreNotifications());
+      }
+    }
+  }
+
+  bool get _isBottom {
+    if (!_scrollController.hasClients) return false;
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.offset;
+    return currentScroll >= (maxScroll * 0.9);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -277,15 +308,29 @@ class _TemperatureThresholdTab extends StatelessWidget {
             },
           ),
         );
+        _bloc = bloc;
         return bloc;
       },
-      child: BlocBuilder<NotificationBloc, NotificationState>(
+      child: BlocConsumer<NotificationBloc, NotificationState>(
+        listener: (context, state) {
+          // Reset loading flag when load more completes
+          if (state is NotificationListLoaded || state is NotificationError) {
+            _isLoadingMore = false;
+          }
+        },
         builder: (context, state) {
           if (state is NotificationLoading) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (state is NotificationListLoaded) {
-            final items = state.list.items;
+
+          // Handle both NotificationListLoaded and NotificationLoadingMore
+          if (state is NotificationListLoaded ||
+              state is NotificationLoadingMore) {
+            final bool isLoadingMore = state is NotificationLoadingMore;
+            final items = isLoadingMore
+                ? (state as NotificationLoadingMore).currentList.items
+                : (state as NotificationListLoaded).list.items;
+
             if (items.isEmpty) {
               return Center(
                 child: Column(
@@ -307,27 +352,55 @@ class _TemperatureThresholdTab extends StatelessWidget {
                 ),
               );
             }
-            return ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              itemCount: items.length,
-              itemBuilder: (context, index) {
-                final item = items[index];
-                return NotificationCard(
-                  item: item,
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => NotificationDetailPage(
-                          id: item.id,
-                          dataTime: item.dataTime,
-                        ),
-                      ),
-                    );
-                  },
+
+            return RefreshIndicator(
+              onRefresh: () async {
+                final now = DateTime.now();
+                context.read<NotificationBloc>().add(
+                  LoadNotificationsEvent(
+                    queryParameters: {
+                      'page': 1,
+                      'pageSize': 20,
+                      'fromTime': now
+                          .subtract(const Duration(days: 7))
+                          .toIso8601String(),
+                    },
+                  ),
                 );
               },
+              child: ListView.builder(
+                controller: _scrollController,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                itemCount: items.length + (isLoadingMore ? 1 : 0),
+                itemBuilder: (context, index) {
+                  if (index >= items.length) {
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(16.0),
+                        child: CircularProgressIndicator(),
+                      ),
+                    );
+                  }
+
+                  final item = items[index];
+                  return NotificationCard(
+                    item: item,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => NotificationDetailPage(
+                            id: item.id,
+                            dataTime: item.dataTime,
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
             );
           }
+
           if (state is NotificationError) {
             return Center(
               child: Column(
@@ -342,6 +415,25 @@ class _TemperatureThresholdTab extends StatelessWidget {
                   Text(
                     state.message,
                     style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      final now = DateTime.now();
+                      context.read<NotificationBloc>().add(
+                        LoadNotificationsEvent(
+                          queryParameters: {
+                            'page': 1,
+                            'pageSize': 20,
+                            'fromTime': now
+                                .subtract(const Duration(days: 7))
+                                .toIso8601String(),
+                          },
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Thử lại'),
                   ),
                 ],
               ),
@@ -364,6 +456,8 @@ class _AIWarningTab extends StatefulWidget {
 
 class _AIWarningTabState extends State<_AIWarningTab> {
   final ScrollController _scrollController = ScrollController();
+  VisionNotificationBloc? _bloc;
+  bool _isLoadingMore = false;
 
   @override
   void initState() {
@@ -373,13 +467,19 @@ class _AIWarningTabState extends State<_AIWarningTab> {
 
   @override
   void dispose() {
+    _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
   }
 
   void _onScroll() {
-    if (_isBottom) {
-      context.read<VisionNotificationBloc>().add(LoadMoreVisionNotifications());
+    if (_isBottom && _bloc != null && !_isLoadingMore) {
+      final state = _bloc!.state;
+      // Only load more if currently loaded and not at max
+      if (state is VisionNotificationLoaded && !state.hasReachedMax) {
+        _isLoadingMore = true;
+        _bloc!.add(LoadMoreVisionNotifications());
+      }
     }
   }
 
@@ -393,32 +493,49 @@ class _AIWarningTabState extends State<_AIWarningTab> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) =>
-          VisionNotificationBloc(
-            getVisionNotificationsUseCase:
-                getIt<GetVisionNotificationsUseCase>(),
-          )..add(
-            FetchVisionNotifications(
-              fromTime: _formatDateTime(
-                DateTime.now().subtract(const Duration(days: 7)),
-              ),
-              toTime: _formatDateTime(DateTime.now()),
-              areaId: 5,
-              cameraId: 3,
-              warningEventId: 2,
-              page: 1,
-              pageSize: 20,
+      create: (context) {
+        final bloc = VisionNotificationBloc(
+          getVisionNotificationsUseCase:
+              getIt<GetVisionNotificationsUseCase>(),
+        )..add(
+          FetchVisionNotifications(
+            fromTime: _formatDateTime(
+              DateTime.now().subtract(const Duration(days: 7)),
             ),
+            toTime: _formatDateTime(DateTime.now()),
+            areaId: 5,
+            cameraId: 3,
+            warningEventId: 2,
+            page: 1,
+            pageSize: 20,
           ),
-      child: BlocBuilder<VisionNotificationBloc, VisionNotificationState>(
+        );
+        _bloc = bloc;
+        return bloc;
+      },
+      child: BlocConsumer<VisionNotificationBloc, VisionNotificationState>(
+        listener: (context, state) {
+          // Reset loading flag when load more completes
+          if (state is VisionNotificationLoaded ||
+              state is VisionNotificationError) {
+            _isLoadingMore = false;
+          }
+        },
         builder: (context, state) {
           if (state is VisionNotificationInitial ||
               state is VisionNotificationLoading) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (state is VisionNotificationLoaded) {
-            final items = state.notifications.items;
+          // Handle both VisionNotificationLoaded and VisionNotificationLoadingMore
+          if (state is VisionNotificationLoaded ||
+              state is VisionNotificationLoadingMore) {
+            final bool isLoadingMore = state is VisionNotificationLoadingMore;
+            final items = isLoadingMore
+                ? (state as VisionNotificationLoadingMore)
+                    .currentNotifications
+                    .items
+                : (state as VisionNotificationLoaded).notifications.items;
 
             if (items.isEmpty) {
               return Center(
@@ -451,14 +568,12 @@ class _AIWarningTabState extends State<_AIWarningTab> {
               child: ListView.builder(
                 controller: _scrollController,
                 padding: const EdgeInsets.all(8),
-                itemCount:
-                    items.length +
-                    (state is VisionNotificationLoadingMore ? 1 : 0),
+                itemCount: items.length + (isLoadingMore ? 1 : 0),
                 itemBuilder: (context, index) {
                   if (index >= items.length) {
                     return const Center(
                       child: Padding(
-                        padding: EdgeInsets.all(8.0),
+                        padding: EdgeInsets.all(16.0),
                         child: CircularProgressIndicator(),
                       ),
                     );

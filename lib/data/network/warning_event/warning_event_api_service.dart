@@ -49,6 +49,8 @@ class WarningEventApiService {
         options: _authorizedOptions(accessToken),
       ),
       mapper: (json) {
+        _logger.debug('Warning events raw response: $json');
+        
         if (json is Map<String, dynamic>) {
           return ApiResponse<List<WarningEventDto>>.fromJson(
             json,
@@ -63,7 +65,20 @@ class WarningEventApiService {
             },
           );
         }
-        throw Exception('Invalid response format');
+        
+        // Handle case where response is directly a List
+        if (json is List) {
+          return ApiResponse<List<WarningEventDto>>(
+            isSuccess: true,
+            data: json
+                .map((item) =>
+                    WarningEventDto.fromJson(item as Map<String, dynamic>))
+                .toList(),
+          );
+        }
+        
+        _logger.error('Invalid response format: ${json.runtimeType}');
+        throw Exception('Invalid response format: ${json.runtimeType}');
       },
     );
   }

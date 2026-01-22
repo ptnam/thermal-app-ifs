@@ -224,7 +224,7 @@ class NotificationCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            item.compareResultObject?.name ?? 'So với pha min toàn trạm',
+                            item.compareTypeObject?.name ?? 'So với pha min toàn trạm',
                             style: const TextStyle(
                               fontSize: 13,
                               color: Color(0xFF94A3B8),
@@ -277,9 +277,9 @@ class NotificationCard extends StatelessWidget {
                         child: Row(
                           children: [
                             const Icon(
-                              Icons.thermostat,
+                              Icons.memory,
                               size: 14,
-                              color: Color(0xFF94A3B8),
+                              color: Color(0xFF60A5FA),
                             ),
                             const SizedBox(width: 6),
                             Text(
@@ -352,9 +352,9 @@ class NotificationCard extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           const Icon(
-                            Icons.thermostat_outlined,
+                            Icons.compare_arrows,
                             size: 14,
-                            color: Color(0xFF94A3B8),
+                            color: Color(0xFFFBBF24),
                           ),
                           const SizedBox(width: 6),
                           Text(

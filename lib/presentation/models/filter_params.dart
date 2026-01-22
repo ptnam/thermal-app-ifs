@@ -6,7 +6,7 @@ class TemperatureFilterParams {
   final String? areaName;
   final int? machineId;
   final String? machineName;
-  final int? notificationStatus; // 1 = Resolved, 2 = Pending
+  final int? notificationStatus; // 1 = Pending (Chưa xử lý), 2 = Processed (Đã xử lý)
 
   const TemperatureFilterParams({
     this.fromTime,
