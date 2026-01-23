@@ -26,15 +26,18 @@ class TemperatureFilterParams {
     int? machineId,
     String? machineName,
     int? notificationStatus,
+    bool clearAreaId = false,
+    bool clearMachineId = false,
+    bool clearNotificationStatus = false,
   }) {
     return TemperatureFilterParams(
       fromTime: fromTime ?? this.fromTime,
       toTime: toTime ?? this.toTime,
-      areaId: areaId ?? this.areaId,
-      areaName: areaName ?? this.areaName,
-      machineId: machineId ?? this.machineId,
-      machineName: machineName ?? this.machineName,
-      notificationStatus: notificationStatus ?? this.notificationStatus,
+      areaId: clearAreaId ? null : (areaId ?? this.areaId),
+      areaName: clearAreaId ? null : (areaName ?? this.areaName),
+      machineId: clearMachineId ? null : (machineId ?? this.machineId),
+      machineName: clearMachineId ? null : (machineName ?? this.machineName),
+      notificationStatus: clearNotificationStatus ? null : (notificationStatus ?? this.notificationStatus),
     );
   }
 
@@ -78,16 +81,19 @@ class AIWarningFilterParams {
     String? cameraName,
     int? warningEventId,
     String? warningEventName,
+    bool clearAreaId = false,
+    bool clearCameraId = false,
+    bool clearWarningEventId = false,
   }) {
     return AIWarningFilterParams(
       fromTime: fromTime ?? this.fromTime,
       toTime: toTime ?? this.toTime,
-      areaId: areaId ?? this.areaId,
-      areaName: areaName ?? this.areaName,
-      cameraId: cameraId ?? this.cameraId,
-      cameraName: cameraName ?? this.cameraName,
-      warningEventId: warningEventId ?? this.warningEventId,
-      warningEventName: warningEventName ?? this.warningEventName,
+      areaId: clearAreaId ? null : (areaId ?? this.areaId),
+      areaName: clearAreaId ? null : (areaName ?? this.areaName),
+      cameraId: clearCameraId ? null : (cameraId ?? this.cameraId),
+      cameraName: clearCameraId ? null : (cameraName ?? this.cameraName),
+      warningEventId: clearWarningEventId ? null : (warningEventId ?? this.warningEventId),
+      warningEventName: clearWarningEventId ? null : (warningEventName ?? this.warningEventName),
     );
   }
 

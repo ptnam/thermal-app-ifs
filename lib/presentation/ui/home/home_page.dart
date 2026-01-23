@@ -12,6 +12,7 @@ import 'package:thermal_mobile/di/injection.dart';
 import 'package:thermal_mobile/data/local/storage/config_storage.dart';
 import 'package:thermal_mobile/presentation/bloc/thermal_data/thermal_data_bloc.dart';
 import 'package:thermal_mobile/presentation/bloc/thermal_data/thermal_data_event.dart';
+import 'package:thermal_mobile/presentation/ui/home/widget/device_status_pie_chart.dart';
 import 'package:thermal_mobile/presentation/ui/home/widget/environment_temperature_card.dart';
 import 'package:thermal_mobile/presentation/ui/home/widget/latest_alerts_card.dart';
 import 'package:thermal_mobile/presentation/ui/home/widget/temperature_extreme_card.dart';
@@ -232,6 +233,12 @@ class _HomePageState extends State<HomePage> {
                   // Temperature extremes (hottest/coldest machines)
                   TemperatureExtremeCard(
                     key: ValueKey('temp_extreme_$_selectedAreaId'),
+                    areaId: _selectedAreaId,
+                  ),
+
+                  // Device status pie chart
+                  DeviceStatusPieChart(
+                    key: ValueKey('device_status_$_selectedAreaId'),
                     areaId: _selectedAreaId,
                   ),
 

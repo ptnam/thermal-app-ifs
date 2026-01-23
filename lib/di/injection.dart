@@ -19,6 +19,7 @@ import 'package:thermal_mobile/data/network/notification/notification_api_servic
 import 'package:thermal_mobile/data/network/role/role_api_service.dart';
 import 'package:thermal_mobile/data/network/thermal_data/thermal_data_api_service.dart';
 import 'package:thermal_mobile/data/network/user/user_api_service.dart';
+import 'package:thermal_mobile/data/network/user/user_token_api_service.dart';
 import 'package:thermal_mobile/data/network/vision_notification/vision_notification_api_service.dart';
 import 'package:thermal_mobile/data/network/warning_event/warning_event_api_service.dart';
 import 'package:thermal_mobile/data/repositories/area_repository_impl.dart';
@@ -285,6 +286,15 @@ void _registerNetworkLayer() {
   getIt.registerLazySingleton<UserApiService>(
     () => UserApiService(
       getIt<ApiClient>(),
+      getIt<BaseUrlProvider>(),
+      logger: logger,
+    ),
+  );
+
+  // User Token API Service (FCM registration)
+  getIt.registerLazySingleton<UserTokenApiService>(
+    () => UserTokenApiService(
+      getIt<Dio>(),
       getIt<BaseUrlProvider>(),
       logger: logger,
     ),

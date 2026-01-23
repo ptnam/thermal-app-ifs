@@ -53,16 +53,15 @@ class MachineThermalRepositoryImpl implements IMachineThermalRepository {
             print('   - ${m.name}: deviceType="${m.deviceType}"');
           }
 
-          final machines = data.item1
-              .where((m) => m.deviceType == 'Machine')
-              .toList();
+          // Get all devices (both Machine and Sensor types)
+          final machines = data.item1.toList();
           print(
-            '🏭 MachineThermalRepo: Found ${machines.length} machines after filter (deviceType=="Machine")',
+            '🏭 MachineThermalRepo: Found ${machines.length} devices total',
           );
 
           if (machines.isEmpty) {
             print(
-              '❌ MachineThermalRepo: No machines with deviceType="Machine"',
+              '❌ MachineThermalRepo: No devices found',
             );
             return const Right(AreaThermalOverviewEntity(machines: []));
           }
@@ -73,7 +72,7 @@ class MachineThermalRepositoryImpl implements IMachineThermalRepository {
           for (final machine in machines) {
             try {
               print(
-                '🌡️ MachineThermalRepo: Fetching thermal for machine ${machine.name} (id=${machine.machineId})',
+                '🌡️ MachineThermalRepo: Fetching thermal for device ${machine.name} (id=${machine.machineId})',
               );
               final thermalResult = await _apiService.getThermalByComponent(
                 machineId: machine.machineId,
@@ -82,11 +81,12 @@ class MachineThermalRepositoryImpl implements IMachineThermalRepository {
                 accessToken: token,
               );
 
+              bool addedWithThermal = false;
               thermalResult.fold(
                 onFailure: (error) {
-                  // Skip machines with errors, log if needed
+                  // Log error but still add the machine
                   print(
-                    'Error fetching thermal for machine ${machine.machineId}: ${error.message}',
+                    'Error fetching thermal for device ${machine.machineId}: ${error.message}',
                   );
                 },
                 onSuccess: (thermalData) {
@@ -101,25 +101,42 @@ class MachineThermalRepositoryImpl implements IMachineThermalRepository {
                       );
                     });
 
-                    if (components.isNotEmpty) {
-                      summaries.add(
-                        MachineThermalSummaryEntity(
-                          machine: MachineThermalMapper.toEntity(machine),
-                          components: components,
-                        ),
-                      );
-                    }
+                    // Add machine with its thermal components
+                    summaries.add(
+                      MachineThermalSummaryEntity(
+                        machine: MachineThermalMapper.toEntity(machine),
+                        components: components,
+                      ),
+                    );
+                    addedWithThermal = true;
                   }
                 },
               );
+
+              // If no thermal data, still add the machine with empty components
+              if (!addedWithThermal) {
+                summaries.add(
+                  MachineThermalSummaryEntity(
+                    machine: MachineThermalMapper.toEntity(machine),
+                    components: const [],
+                  ),
+                );
+              }
             } catch (e) {
-              // Skip machine on error
+              // Still add machine on error with empty components
               print(
-                'Exception fetching thermal for machine ${machine.machineId}: $e',
+                'Exception fetching thermal for device ${machine.machineId}: $e',
+              );
+              summaries.add(
+                MachineThermalSummaryEntity(
+                  machine: MachineThermalMapper.toEntity(machine),
+                  components: const [],
+                ),
               );
             }
           }
 
+          print('✅ MachineThermalRepo: Total devices loaded: ${summaries.length}');
           return Right(AreaThermalOverviewEntity(machines: summaries));
         },
       );

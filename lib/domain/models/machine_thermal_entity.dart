@@ -30,6 +30,19 @@ class MachineResultEntity {
   bool get isSensor => deviceType == 'Sensor';
 }
 
+/// Evaluation result entity for component status
+class EvaluationResultEntity {
+  final String compareType;
+  final String? resultCode;
+  final String? resultName;
+
+  const EvaluationResultEntity({
+    required this.compareType,
+    this.resultCode,
+    this.resultName,
+  });
+}
+
 /// Thermal component entity
 class ThermalComponentEntity {
   final String dateData;
@@ -44,6 +57,7 @@ class ThermalComponentEntity {
   final String monitorPointCode;
   final int orderNumber;
   final String dataSourceType;
+  final List<EvaluationResultEntity> evaluationResults;
 
   const ThermalComponentEntity({
     required this.dateData,
@@ -58,7 +72,30 @@ class ThermalComponentEntity {
     required this.monitorPointCode,
     required this.orderNumber,
     required this.dataSourceType,
+    this.evaluationResults = const [],
   });
+
+  /// Get the worst evaluation status code from all results
+  /// Priority: Bad > Warning > Fair > Good
+  String? get worstStatusCode {
+    if (evaluationResults.isEmpty) return null;
+    
+    const priority = {'Bad': 4, 'Warning': 3, 'Fair': 2, 'Good': 1};
+    String? worstCode;
+    int worstPriority = 0;
+    
+    for (final result in evaluationResults) {
+      final code = result.resultCode;
+      if (code != null) {
+        final p = priority[code] ?? 0;
+        if (p > worstPriority) {
+          worstPriority = p;
+          worstCode = code;
+        }
+      }
+    }
+    return worstCode;
+  }
 }
 
 /// Machine thermal summary entity
@@ -95,6 +132,29 @@ class MachineThermalSummaryEntity {
     if (components.isEmpty) return null;
     return components.reduce((a, b) =>
         a.minTemperature < b.minTemperature ? a : b);
+  }
+
+  /// Get the worst evaluation status code from all components
+  /// Priority: Bad > Warning > Fair > Good
+  /// Returns null if no evaluation data
+  String? get worstStatusCode {
+    if (components.isEmpty) return null;
+    
+    const priority = {'Bad': 4, 'Warning': 3, 'Fair': 2, 'Good': 1};
+    String? worstCode;
+    int worstPriority = 0;
+    
+    for (final component in components) {
+      final code = component.worstStatusCode;
+      if (code != null) {
+        final p = priority[code] ?? 0;
+        if (p > worstPriority) {
+          worstPriority = p;
+          worstCode = code;
+        }
+      }
+    }
+    return worstCode;
   }
 }
 

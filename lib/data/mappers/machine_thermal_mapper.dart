@@ -20,6 +20,20 @@ class MachineThermalMapper {
   }
 
   static ThermalComponentEntity toThermalEntity(ThermalComponentDto dto) {
+    // Extract evaluation results from dicThermalDataResults
+    final evaluationResults = <EvaluationResultEntity>[];
+    dto.dicThermalDataResults.forEach((key, thermalResult) {
+      if (thermalResult.compareResultObject != null) {
+        evaluationResults.add(
+          EvaluationResultEntity(
+            compareType: key,
+            resultCode: thermalResult.compareResultObject!.code,
+            resultName: thermalResult.compareResultObject!.name,
+          ),
+        );
+      }
+    });
+
     return ThermalComponentEntity(
       dateData: dto.dateData,
       timeData: dto.timeData,
@@ -33,6 +47,7 @@ class MachineThermalMapper {
       monitorPointCode: dto.monitorPointCode,
       orderNumber: dto.orderNumber,
       dataSourceType: dto.dataSourceType,
+      evaluationResults: evaluationResults,
     );
   }
 }

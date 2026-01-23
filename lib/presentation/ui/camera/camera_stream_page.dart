@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:thermal_mobile/core/configs/app_config.dart';
 import 'package:thermal_mobile/domain/models/camera_stream.dart';
+import 'package:thermal_mobile/presentation/widgets/ptz_dpad_controller.dart';
 import 'package:video_player/video_player.dart';
 import '../../bloc/camera/camera_stream_bloc.dart';
 import '../../../di/injection.dart';
@@ -177,34 +178,60 @@ class _CameraStreamPageState extends State<CameraStreamPage> {
   }
 
   Widget _buildFullscreenVideo(BuildContext context) {
-    return Center(
-      child: _videoController != null && _videoController!.value.isInitialized
-          ? SizedBox.expand(
-              child: FittedBox(
-                fit: BoxFit.contain,
-                child: SizedBox(
-                  width: _videoController!.value.size.width,
-                  height: _videoController!.value.size.height,
-                  child: VideoPlayer(_videoController!),
+    return Stack(
+      children: [
+        Center(
+          child: _videoController != null && _videoController!.value.isInitialized
+              ? SizedBox.expand(
+                  child: FittedBox(
+                    fit: BoxFit.contain,
+                    child: SizedBox(
+                      width: _videoController!.value.size.width,
+                      height: _videoController!.value.size.height,
+                      child: VideoPlayer(_videoController!),
+                    ),
+                  ),
+                )
+              : Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Đang tải video...',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Colors.grey[400],
+                          ),
+                    ),
+                  ],
                 ),
-              ),
-            )
-          : Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Đang tải video...',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.grey[400],
-                      ),
-                ),
-              ],
-            ),
+        ),
+        // PTZ D-Pad Controller
+        PtzDpadController(
+          initiallyVisible: false,
+          initialSpeed: 0.5,
+          onMove: (direction, speed) {
+            _handlePtzMove(direction, speed);
+          },
+          onStop: () {
+            _handlePtzStop();
+          },
+        ),
+      ],
     );
+  }
+
+  void _handlePtzMove(PtzDirection direction, double speed) {
+    // TODO: Implement PTZ API call
+    // Example: Call camera PTZ API with direction and speed
+    debugPrint('PTZ Move: $direction at speed $speed');
+  }
+
+  void _handlePtzStop() {
+    // TODO: Implement PTZ stop API call
+    debugPrint('PTZ Stop');
   }
 
   Widget _buildStreamContent(BuildContext context, CameraStream stream) {

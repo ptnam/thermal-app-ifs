@@ -172,6 +172,9 @@ class AppDrawer extends StatelessWidget {
     }
 
     try {
+      // Unregister FCM token first
+      await app_main.messagingService.unregisterToken();
+      
       final authRepository = getIt<AuthRepository>();
       await authRepository.logout();
 

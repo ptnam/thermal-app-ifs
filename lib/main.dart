@@ -1,8 +1,10 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:thermal_mobile/core/constants/themes.dart';
 import 'package:thermal_mobile/core/services/firebase_messaging_service.dart';
+import 'package:thermal_mobile/data/network/user/user_token_api_service.dart';
 import 'package:thermal_mobile/firebase_options.dart';
 import 'package:thermal_mobile/presentation/bloc/user/user_bloc.dart';
 import 'package:thermal_mobile/presentation/navigation/main_shell.dart';
@@ -13,19 +15,35 @@ import 'domain/repositories/auth_repository.dart';
 
 late GlobalKey<NavigatorState> _navigatorKey;
 
+/// Global FirebaseMessagingService instance
+late FirebaseMessagingService messagingService;
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  // Initialize Firebase with error handling for hot restart
+  try {
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    }
+  } catch (e) {
+    // Firebase already initialized (can happen on hot restart)
+    debugPrint('Firebase init error (likely already initialized): $e');
+  }
 
   // Setup background message handler
-  // FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
   await configureDependencies();
 
   // Initialize Firebase Messaging
-  final messagingService = FirebaseMessagingService();
+  messagingService = FirebaseMessagingService();
+
+  // Configure with dependencies
+  messagingService.configure(userTokenApiService: getIt<UserTokenApiService>());
+
   await messagingService.initialize();
 
   // Setup notification tap handler
@@ -35,10 +53,10 @@ Future<void> main() async {
     // Example: Navigate to specific screen based on notification type
   };
 
-  // Setup token refresh handler - send to backend
+  // Setup token refresh handler
   messagingService.onTokenRefresh = (token) {
     debugPrint('New FCM token: $token');
-    // TODO: Send token to your backend server
+    // Token is automatically sent to server when user is logged in
   };
 
   // Decide initial screen based on cached session

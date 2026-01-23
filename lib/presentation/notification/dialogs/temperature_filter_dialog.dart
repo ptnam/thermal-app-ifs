@@ -132,7 +132,7 @@ class _TemperatureFilterDialogState extends State<TemperatureFilterDialog> {
 
   void _onApply() {
     Navigator.of(context).pop(
-      widget.initialParams.copyWith(
+      TemperatureFilterParams(
         fromTime: fromTime,
         toTime: toTime,
         areaId: areaId,

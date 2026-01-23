@@ -135,7 +135,7 @@ class _AIWarningFilterDialogState extends State<AIWarningFilterDialog> {
 
   void _onApply() {
     Navigator.of(context).pop(
-      widget.initialParams.copyWith(
+      AIWarningFilterParams(
         fromTime: fromTime,
         toTime: toTime,
         areaId: areaId,

@@ -6,6 +6,7 @@ import 'package:thermal_mobile/data/network/warning_event/dto/warning_event_dto.
 import 'package:thermal_mobile/data/network/api/base_dto.dart';
 import 'package:thermal_mobile/data/network/camera/dto/camera_dto.dart';
 import 'package:thermal_mobile/core/types/get_access_token.dart';
+import 'package:thermal_mobile/data/local/storage/config_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
@@ -31,6 +32,68 @@ class NotificationPage extends StatefulWidget {
 }
 
 class _NotificationPageState extends State<NotificationPage> {
+  late final NotificationBloc _notificationBloc;
+  late final VisionNotificationBloc _visionNotificationBloc;
+  int? _savedAreaId;
+
+  @override
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    
+    // Load saved area from home screen
+    _savedAreaId = getIt<ConfigStorage>().getSelectedAreaId();
+
+    _notificationBloc =
+        NotificationBloc(
+          getNotificationsUseCase: getIt(),
+          getNotificationDetailUseCase: getIt(),
+          getNotificationCountUseCase: getIt(),
+          logger: getIt(),
+        )..add(
+          LoadNotificationsEvent(
+            queryParameters: {
+              'page': 1,
+              'pageSize': 20,
+              'fromTime': now
+                  .subtract(const Duration(days: 7))
+                  .toIso8601String(),
+            },
+          ),
+        );
+
+    _visionNotificationBloc =
+        VisionNotificationBloc(
+          getVisionNotificationsUseCase: getIt<GetVisionNotificationsUseCase>(),
+        )..add(
+          FetchVisionNotifications(
+            fromTime: _formatDateTime(now.subtract(const Duration(days: 7))),
+            toTime: _formatDateTime(now),
+            page: 1,
+            pageSize: 20,
+          ),
+        );
+    
+    // Initialize filters with saved area from home screen
+    _initFiltersWithSavedArea();
+  }
+
+  @override
+  void dispose() {
+    _notificationBloc.close();
+    _visionNotificationBloc.close();
+    super.dispose();
+  }
+
+  static String _formatDateTime(DateTime dateTime) {
+    return '${dateTime.year.toString().padLeft(4, '0')}-'
+        '${dateTime.month.toString().padLeft(2, '0')}-'
+        '${dateTime.day.toString().padLeft(2, '0')} '
+        '${dateTime.hour.toString().padLeft(2, '0')}:'
+        '${dateTime.minute.toString().padLeft(2, '0')}:'
+        '${dateTime.second.toString().padLeft(2, '0')}';
+  }
+
   Future<String> _getAccessToken() async {
     final getAccessToken = getIt<GetAccessToken>();
     return await getAccessToken();
@@ -87,154 +150,178 @@ class _NotificationPageState extends State<NotificationPage> {
         .toList();
   }
 
-  TemperatureFilterParams _temperatureFilter =
-      TemperatureFilterParams.defaultFilter();
-  AIWarningFilterParams _aiWarningFilter =
-      AIWarningFilterParams.defaultFilter();
+  late TemperatureFilterParams _temperatureFilter;
+  late AIWarningFilterParams _aiWarningFilter;
+  
+  void _initFiltersWithSavedArea() {
+    _temperatureFilter = TemperatureFilterParams(
+      fromTime: DateTime.now().subtract(const Duration(days: 7)),
+      toTime: DateTime.now(),
+      areaId: _savedAreaId,
+    );
+    _aiWarningFilter = AIWarningFilterParams(
+      fromTime: DateTime.now().subtract(const Duration(days: 7)),
+      toTime: DateTime.now(),
+      areaId: _savedAreaId,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        appBar: PreferredSize(
-          preferredSize: const Size.fromHeight(kToolbarHeight + 48 + 8 + 1),
-          child: Container(
-            decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: AppColors.line.withOpacity(0.32),
-                  width: 1,
-                ),
-              ),
-            ),
-            child: AppBar(
-              automaticallyImplyLeading: false,
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              leading: InkWell(
-                onTap: () {
-                  AppDrawerService.openDrawer();
-                },
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: SvgPicture.asset(
-                    AppIcons.icMenu,
-                    colorFilter: const ColorFilter.mode(
-                      Colors.white,
-                      BlendMode.srcIn,
-                    ),
-                    width: 24,
-                    height: 24,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<NotificationBloc>.value(value: _notificationBloc),
+        BlocProvider<VisionNotificationBloc>.value(
+          value: _visionNotificationBloc,
+        ),
+      ],
+      child: DefaultTabController(
+        length: 2,
+        child: Scaffold(
+          appBar: PreferredSize(
+            preferredSize: const Size.fromHeight(kToolbarHeight + 48 + 8 + 1),
+            child: Container(
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: AppColors.line.withOpacity(0.32),
+                    width: 1,
                   ),
                 ),
               ),
-              title: Text(
-                'Sự cố',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              actions: [
-                Builder(
-                  builder: (context) {
-                    return IconButton(
-                      icon: const Icon(Icons.filter_list, color: Colors.white),
-                      onPressed: () async {
-                        // Lấy tabIndex tại thời điểm nhấn button
-                        final tabIndex = DefaultTabController.of(context).index;
-                        if (tabIndex == 0) {
-                          final areaItems = await _getAreaItems();
-                          final machineItems = await _getMachineItems(
-                            _temperatureFilter.areaId,
-                          );
-                          final result = await TemperatureFilterDialog.show(
-                            context: context,
-                            initialParams: _temperatureFilter,
-                            areaItems: areaItems,
-                            machineItems: machineItems,
-                            onAreaChanged: _getMachineItems,
-                          );
-                          if (result != null) {
-                            setState(() => _temperatureFilter = result);
-                            // Gửi sự kiện filter cho NotificationBloc
-                            context.read<NotificationBloc>().add(
-                              LoadNotificationsEvent(
-                                queryParameters: {
-                                  'fromTime': result.fromTime
-                                      ?.toIso8601String(),
-                                  'toTime': result.toTime?.toIso8601String(),
-                                  'areaId': result.areaId,
-                                  'machineId': result.machineId,
-                                  'notificationStatus':
-                                      result.notificationStatus,
-                                  'page': 1,
-                                  'pageSize': 20,
-                                }..removeWhere((k, v) => v == null),
-                              ),
-                            );
-                          }
-                        } else {
-                          final areaItems = await _getAreaItems();
-                          final cameraItems = await _getCameraItems(
-                            _aiWarningFilter.areaId,
-                          );
-                          final warningEventItems =
-                              await _getWarningEventItems();
-                          final result = await AIWarningFilterDialog.show(
-                            context: context,
-                            initialParams: _aiWarningFilter,
-                            areaItems: areaItems,
-                            cameraItems: cameraItems,
-                            warningEventItems: warningEventItems,
-                            onAreaChanged: _getCameraItems,
-                          );
-                          if (result != null) {
-                            setState(() => _aiWarningFilter = result);
-                            // Gửi sự kiện filter cho VisionNotificationBloc
-                            context.read<VisionNotificationBloc>().add(
-                              FetchVisionNotifications(
-                                fromTime:
-                                    result.fromTime?.toIso8601String() ?? '',
-                                toTime: result.toTime?.toIso8601String(),
-                                areaId: result.areaId,
-                                cameraId: result.cameraId,
-                                warningEventId: result.warningEventId,
-                                page: 1,
-                                pageSize: 20,
-                              ),
-                            );
-                          }
-                        }
-                      },
-                    );
+              child: AppBar(
+                automaticallyImplyLeading: false,
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                leading: InkWell(
+                  onTap: () {
+                    AppDrawerService.openDrawer();
                   },
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: SvgPicture.asset(
+                      AppIcons.icMenu,
+                      colorFilter: const ColorFilter.mode(
+                        Colors.white,
+                        BlendMode.srcIn,
+                      ),
+                      width: 24,
+                      height: 24,
+                    ),
+                  ),
                 ),
-              ],
-              bottom: TabBar(
-                indicatorColor: Colors.white,
-                indicatorWeight: 3,
-                labelColor: Colors.white,
-                unselectedLabelColor: Colors.white.withOpacity(0.6),
-                labelStyle: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
+                title: Text(
+                  'Sự cố',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-                unselectedLabelStyle: const TextStyle(
-                  fontWeight: FontWeight.w400,
-                  fontSize: 14,
-                ),
-                tabs: const [
-                  Tab(text: 'Nhiệt độ vượt ngưỡng'),
-                  Tab(text: 'Cảnh báo AI'),
+                actions: [
+                  Builder(
+                    builder: (context) {
+                      return IconButton(
+                        icon: const Icon(
+                          Icons.filter_list,
+                          color: Colors.white,
+                        ),
+                        onPressed: () async {
+                          // Lấy tabIndex tại thời điểm nhấn button
+                          final tabIndex = DefaultTabController.of(
+                            context,
+                          ).index;
+                          if (tabIndex == 0) {
+                            final areaItems = await _getAreaItems();
+                            final machineItems = await _getMachineItems(
+                              _temperatureFilter.areaId,
+                            );
+                            final result = await TemperatureFilterDialog.show(
+                              context: context,
+                              initialParams: _temperatureFilter,
+                              areaItems: areaItems,
+                              machineItems: machineItems,
+                              onAreaChanged: _getMachineItems,
+                            );
+                            if (result != null) {
+                              setState(() => _temperatureFilter = result);
+                              // Gửi sự kiện filter cho NotificationBloc
+                              context.read<NotificationBloc>().add(
+                                LoadNotificationsEvent(
+                                  queryParameters: {
+                                    'fromTime': result.fromTime
+                                        ?.toIso8601String(),
+                                    'toTime': result.toTime?.toIso8601String(),
+                                    'areaId': result.areaId,
+                                    'machineId': result.machineId,
+                                    'notificationStatus':
+                                        result.notificationStatus,
+                                    'page': 1,
+                                    'pageSize': 20,
+                                  }..removeWhere((k, v) => v == null),
+                                ),
+                              );
+                            }
+                          } else {
+                            final areaItems = await _getAreaItems();
+                            final cameraItems = await _getCameraItems(
+                              _aiWarningFilter.areaId,
+                            );
+                            final warningEventItems =
+                                await _getWarningEventItems();
+                            final result = await AIWarningFilterDialog.show(
+                              context: context,
+                              initialParams: _aiWarningFilter,
+                              areaItems: areaItems,
+                              cameraItems: cameraItems,
+                              warningEventItems: warningEventItems,
+                              onAreaChanged: _getCameraItems,
+                            );
+                            if (result != null) {
+                              setState(() => _aiWarningFilter = result);
+                              // Gửi sự kiện filter cho VisionNotificationBloc
+                              context.read<VisionNotificationBloc>().add(
+                                FetchVisionNotifications(
+                                  fromTime:
+                                      result.fromTime?.toIso8601String() ?? '',
+                                  toTime: result.toTime?.toIso8601String(),
+                                  areaId: result.areaId,
+                                  cameraId: result.cameraId,
+                                  warningEventId: result.warningEventId,
+                                  page: 1,
+                                  pageSize: 20,
+                                ),
+                              );
+                            }
+                          }
+                        },
+                      );
+                    },
+                  ),
                 ],
+                bottom: TabBar(
+                  indicatorColor: Colors.white,
+                  indicatorWeight: 3,
+                  labelColor: Colors.white,
+                  unselectedLabelColor: Colors.white.withOpacity(0.6),
+                  labelStyle: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                  unselectedLabelStyle: const TextStyle(
+                    fontWeight: FontWeight.w400,
+                    fontSize: 14,
+                  ),
+                  tabs: const [
+                    Tab(text: 'Nhiệt độ vượt ngưỡng'),
+                    Tab(text: 'Cảnh báo AI'),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-        body: const TabBarView(
-          children: [_TemperatureThresholdTab(), _AIWarningTab()],
+          body: const TabBarView(
+            children: [_TemperatureThresholdTab(), _AIWarningTab()],
+          ),
         ),
       ),
     );
@@ -252,7 +339,6 @@ class _TemperatureThresholdTab extends StatefulWidget {
 
 class _TemperatureThresholdTabState extends State<_TemperatureThresholdTab> {
   final ScrollController _scrollController = ScrollController();
-  NotificationBloc? _bloc;
   bool _isLoadingMore = false;
 
   @override
@@ -269,12 +355,13 @@ class _TemperatureThresholdTabState extends State<_TemperatureThresholdTab> {
   }
 
   void _onScroll() {
-    if (_isBottom && _bloc != null && !_isLoadingMore) {
-      final state = _bloc!.state;
+    if (_isBottom && !_isLoadingMore) {
+      final bloc = context.read<NotificationBloc>();
+      final state = bloc.state;
       // Only load more if currently loaded and has more pages
       if (state is NotificationListLoaded && state.list.hasNextPage) {
         _isLoadingMore = true;
-        _bloc!.add(LoadMoreNotifications());
+        bloc.add(LoadMoreNotifications());
       }
     }
   }
@@ -288,160 +375,132 @@ class _TemperatureThresholdTabState extends State<_TemperatureThresholdTab> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<NotificationBloc>(
-      create: (_) {
-        final bloc = NotificationBloc(
-          getNotificationsUseCase: getIt(),
-          getNotificationDetailUseCase: getIt(),
-          getNotificationCountUseCase: getIt(),
-          logger: getIt(),
-        );
-        final now = DateTime.now();
-        bloc.add(
-          LoadNotificationsEvent(
-            queryParameters: {
-              'page': 1,
-              'pageSize': 20,
-              'fromTime': now
-                  .subtract(const Duration(days: 7))
-                  .toIso8601String(),
-            },
-          ),
-        );
-        _bloc = bloc;
-        return bloc;
+    return BlocConsumer<NotificationBloc, NotificationState>(
+      listener: (context, state) {
+        // Reset loading flag when load more completes
+        if (state is NotificationListLoaded || state is NotificationError) {
+          _isLoadingMore = false;
+        }
       },
-      child: BlocConsumer<NotificationBloc, NotificationState>(
-        listener: (context, state) {
-          // Reset loading flag when load more completes
-          if (state is NotificationListLoaded || state is NotificationError) {
-            _isLoadingMore = false;
-          }
-        },
-        builder: (context, state) {
-          if (state is NotificationLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      builder: (context, state) {
+        if (state is NotificationLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-          // Handle both NotificationListLoaded and NotificationLoadingMore
-          if (state is NotificationListLoaded ||
-              state is NotificationLoadingMore) {
-            final bool isLoadingMore = state is NotificationLoadingMore;
-            final items = isLoadingMore
-                ? (state as NotificationLoadingMore).currentList.items
-                : (state as NotificationListLoaded).list.items;
+        // Handle both NotificationListLoaded and NotificationLoadingMore
+        if (state is NotificationListLoaded ||
+            state is NotificationLoadingMore) {
+          final bool isLoadingMore = state is NotificationLoadingMore;
+          final items = isLoadingMore
+              ? (state as NotificationLoadingMore).currentList.items
+              : (state as NotificationListLoaded).list.items;
 
-            if (items.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.notifications_none,
-                      size: 64,
-                      color: Colors.grey.shade300,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Không có thông báo',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }
-
-            return RefreshIndicator(
-              onRefresh: () async {
-                final now = DateTime.now();
-                context.read<NotificationBloc>().add(
-                  LoadNotificationsEvent(
-                    queryParameters: {
-                      'page': 1,
-                      'pageSize': 20,
-                      'fromTime': now
-                          .subtract(const Duration(days: 7))
-                          .toIso8601String(),
-                    },
-                  ),
-                );
-              },
-              child: ListView.builder(
-                controller: _scrollController,
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                itemCount: items.length + (isLoadingMore ? 1 : 0),
-                itemBuilder: (context, index) {
-                  if (index >= items.length) {
-                    return const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(16.0),
-                        child: CircularProgressIndicator(),
-                      ),
-                    );
-                  }
-
-                  final item = items[index];
-                  return NotificationCard(
-                    item: item,
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => NotificationDetailPage(
-                            id: item.id,
-                            dataTime: item.dataTime,
-                          ),
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
-            );
-          }
-
-          if (state is NotificationError) {
+          if (items.isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                    Icons.error_outline,
+                    Icons.notifications_none,
                     size: 64,
-                    color: Colors.red.shade300,
+                    color: Colors.grey.shade300,
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    state.message,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      final now = DateTime.now();
-                      context.read<NotificationBloc>().add(
-                        LoadNotificationsEvent(
-                          queryParameters: {
-                            'page': 1,
-                            'pageSize': 20,
-                            'fromTime': now
-                                .subtract(const Duration(days: 7))
-                                .toIso8601String(),
-                          },
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Thử lại'),
+                    'Không có thông báo',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: Colors.grey.shade600,
+                    ),
                   ),
                 ],
               ),
             );
           }
-          return const SizedBox.shrink();
-        },
-      ),
+
+          return RefreshIndicator(
+            onRefresh: () async {
+              final now = DateTime.now();
+              context.read<NotificationBloc>().add(
+                LoadNotificationsEvent(
+                  queryParameters: {
+                    'page': 1,
+                    'pageSize': 20,
+                    'fromTime': now
+                        .subtract(const Duration(days: 7))
+                        .toIso8601String(),
+                  },
+                ),
+              );
+            },
+            child: ListView.builder(
+              controller: _scrollController,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              itemCount: items.length + (isLoadingMore ? 1 : 0),
+              itemBuilder: (context, index) {
+                if (index >= items.length) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: CircularProgressIndicator(),
+                    ),
+                  );
+                }
+
+                final item = items[index];
+                return NotificationCard(
+                  item: item,
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => NotificationDetailPage(
+                          id: item.id,
+                          dataTime: item.dataTime,
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          );
+        }
+
+        if (state is NotificationError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline, size: 64, color: Colors.red.shade300),
+                const SizedBox(height: 16),
+                Text(
+                  state.message,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    final now = DateTime.now();
+                    context.read<NotificationBloc>().add(
+                      LoadNotificationsEvent(
+                        queryParameters: {
+                          'page': 1,
+                          'pageSize': 20,
+                          'fromTime': now
+                              .subtract(const Duration(days: 7))
+                              .toIso8601String(),
+                        },
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Thử lại'),
+                ),
+              ],
+            ),
+          );
+        }
+        return const SizedBox.shrink();
+      },
     );
   }
 }
@@ -456,7 +515,6 @@ class _AIWarningTab extends StatefulWidget {
 
 class _AIWarningTabState extends State<_AIWarningTab> {
   final ScrollController _scrollController = ScrollController();
-  VisionNotificationBloc? _bloc;
   bool _isLoadingMore = false;
 
   @override
@@ -473,12 +531,13 @@ class _AIWarningTabState extends State<_AIWarningTab> {
   }
 
   void _onScroll() {
-    if (_isBottom && _bloc != null && !_isLoadingMore) {
-      final state = _bloc!.state;
+    if (_isBottom && !_isLoadingMore) {
+      final bloc = context.read<VisionNotificationBloc>();
+      final state = bloc.state;
       // Only load more if currently loaded and not at max
       if (state is VisionNotificationLoaded && !state.hasReachedMax) {
         _isLoadingMore = true;
-        _bloc!.add(LoadMoreVisionNotifications());
+        bloc.add(LoadMoreVisionNotifications());
       }
     }
   }
@@ -492,163 +551,127 @@ class _AIWarningTabState extends State<_AIWarningTab> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) {
-        final bloc = VisionNotificationBloc(
-          getVisionNotificationsUseCase:
-              getIt<GetVisionNotificationsUseCase>(),
-        )..add(
-          FetchVisionNotifications(
-            fromTime: _formatDateTime(
-              DateTime.now().subtract(const Duration(days: 7)),
-            ),
-            toTime: _formatDateTime(DateTime.now()),
-            areaId: 5,
-            cameraId: 3,
-            warningEventId: 2,
-            page: 1,
-            pageSize: 20,
-          ),
-        );
-        _bloc = bloc;
-        return bloc;
+    return BlocConsumer<VisionNotificationBloc, VisionNotificationState>(
+      listener: (context, state) {
+        // Reset loading flag when load more completes
+        if (state is VisionNotificationLoaded ||
+            state is VisionNotificationError) {
+          _isLoadingMore = false;
+        }
       },
-      child: BlocConsumer<VisionNotificationBloc, VisionNotificationState>(
-        listener: (context, state) {
-          // Reset loading flag when load more completes
-          if (state is VisionNotificationLoaded ||
-              state is VisionNotificationError) {
-            _isLoadingMore = false;
-          }
-        },
-        builder: (context, state) {
-          if (state is VisionNotificationInitial ||
-              state is VisionNotificationLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      builder: (context, state) {
+        if (state is VisionNotificationInitial ||
+            state is VisionNotificationLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-          // Handle both VisionNotificationLoaded and VisionNotificationLoadingMore
-          if (state is VisionNotificationLoaded ||
-              state is VisionNotificationLoadingMore) {
-            final bool isLoadingMore = state is VisionNotificationLoadingMore;
-            final items = isLoadingMore
-                ? (state as VisionNotificationLoadingMore)
+        // Handle both VisionNotificationLoaded and VisionNotificationLoadingMore
+        if (state is VisionNotificationLoaded ||
+            state is VisionNotificationLoadingMore) {
+          final bool isLoadingMore = state is VisionNotificationLoadingMore;
+          final items = isLoadingMore
+              ? (state as VisionNotificationLoadingMore)
                     .currentNotifications
                     .items
-                : (state as VisionNotificationLoaded).notifications.items;
+              : (state as VisionNotificationLoaded).notifications.items;
 
-            if (items.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.notifications_none,
-                      size: 64,
-                      color: Colors.grey.shade300,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Không có cảnh báo AI',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }
-
-            return RefreshIndicator(
-              onRefresh: () async {
-                context.read<VisionNotificationBloc>().add(
-                  RefreshVisionNotifications(),
-                );
-              },
-              child: ListView.builder(
-                controller: _scrollController,
-                padding: const EdgeInsets.all(8),
-                itemCount: items.length + (isLoadingMore ? 1 : 0),
-                itemBuilder: (context, index) {
-                  if (index >= items.length) {
-                    return const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(16.0),
-                        child: CircularProgressIndicator(),
-                      ),
-                    );
-                  }
-
-                  final item = items[index];
-                  return _VisionNotificationCard(
-                    item: item,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => VisionNotificationDetailScreen(
-                            notification: item,
-                          ),
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
-            );
-          }
-
-          if (state is VisionNotificationError) {
+          if (items.isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                    Icons.error_outline,
+                    Icons.notifications_none,
                     size: 64,
-                    color: Colors.red.shade300,
+                    color: Colors.grey.shade300,
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Có lỗi xảy ra',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    state.message,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    'Không có cảnh báo AI',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       color: Colors.grey.shade600,
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      context.read<VisionNotificationBloc>().add(
-                        RefreshVisionNotifications(),
-                      );
-                    },
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Thử lại'),
                   ),
                 ],
               ),
             );
           }
 
-          return const SizedBox.shrink();
-        },
-      ),
-    );
-  }
+          return RefreshIndicator(
+            onRefresh: () async {
+              context.read<VisionNotificationBloc>().add(
+                RefreshVisionNotifications(),
+              );
+            },
+            child: ListView.builder(
+              controller: _scrollController,
+              padding: const EdgeInsets.all(8),
+              itemCount: items.length + (isLoadingMore ? 1 : 0),
+              itemBuilder: (context, index) {
+                if (index >= items.length) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: CircularProgressIndicator(),
+                    ),
+                  );
+                }
 
-  static String _formatDateTime(DateTime dateTime) {
-    return '${dateTime.year.toString().padLeft(4, '0')}-'
-        '${dateTime.month.toString().padLeft(2, '0')}-'
-        '${dateTime.day.toString().padLeft(2, '0')} '
-        '${dateTime.hour.toString().padLeft(2, '0')}:'
-        '${dateTime.minute.toString().padLeft(2, '0')}:'
-        '${dateTime.second.toString().padLeft(2, '0')}';
+                final item = items[index];
+                return _VisionNotificationCard(
+                  item: item,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            VisionNotificationDetailScreen(notification: item),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          );
+        }
+
+        if (state is VisionNotificationError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline, size: 64, color: Colors.red.shade300),
+                const SizedBox(height: 16),
+                Text(
+                  'Có lỗi xảy ra',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  state.message,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    context.read<VisionNotificationBloc>().add(
+                      RefreshVisionNotifications(),
+                    );
+                  },
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Thử lại'),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return const SizedBox.shrink();
+      },
+    );
   }
 }
 
@@ -660,111 +683,216 @@ class _VisionNotificationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 0),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _getWarningColor(
-                        item.warningEventName,
-                      ).withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      item.warningEventName,
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: _getWarningColor(item.warningEventName),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    item.formattedDate,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
+    final warningColor = _getWarningColor(item.warningEventName);
+    final warningBgColor = warningColor.withOpacity(0.15);
 
-              // Location and Machine
-              Row(
-                children: [
-                  Icon(
-                    Icons.location_on,
-                    size: 16,
-                    color: Colors.grey.shade600,
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      item.areaName,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF1A2332), Color(0xFF0F1419)],
               ),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  Icon(Icons.camera_alt, size: 16, color: Colors.grey.shade600),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      item.cameraName,
-                      style: Theme.of(context).textTheme.bodySmall,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: const Color(0xFF2D3748).withOpacity(0.5),
+                width: 1,
               ),
-
-              // Preview Image
-              if (item.imagePath.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.network(
-                    item.imagePath,
-                    height: 120,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        height: 120,
-                        color: Colors.grey.shade200,
-                        child: const Center(
-                          child: Icon(Icons.broken_image, color: Colors.grey),
-                        ),
-                      );
-                    },
-                  ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
                 ),
               ],
-            ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header: Warning Event and Badge
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.warningEventName ?? 'Cảnh báo AI',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                              height: 1.2,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            item.formattedDate ?? '',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF94A3B8),
+                              height: 1.3,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Warning Badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: warningBgColor,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.warning_amber_rounded,
+                            size: 14,
+                            color: warningColor,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'AI',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: warningColor,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // Info Chips Row
+                Row(
+                  children: [
+                    // Area Chip
+                    Flexible(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1E293B),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: const Color(0xFF334155)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.location_on,
+                              size: 14,
+                              color: Color(0xFFEF4444),
+                            ),
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: Text(
+                                item.areaName ?? '',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Camera Chip
+                    Flexible(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1E293B),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: const Color(0xFF334155)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.videocam,
+                              size: 14,
+                              color: Color(0xFF60A5FA),
+                            ),
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: Text(
+                                item.cameraName ?? '',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                // Preview Image
+                if (item.imagePath != null && item.imagePath.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Image.network(
+                      item.imagePath,
+                      height: 140,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          height: 140,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1E293B),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Center(
+                            child: Icon(
+                              Icons.broken_image_outlined,
+                              color: Color(0xFF64748B),
+                              size: 32,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
         ),
       ),
@@ -772,14 +900,15 @@ class _VisionNotificationCard extends StatelessWidget {
   }
 
   Color _getWarningColor(String? warningName) {
-    if (warningName == null) return Colors.grey;
+    if (warningName == null) return const Color(0xFF64748B);
     if (warningName.contains('Quá nhiệt') ||
-        warningName.contains('Nguy hiểm')) {
-      return Colors.red;
+        warningName.contains('Nguy hiểm') ||
+        warningName.contains('Cháy')) {
+      return const Color(0xFFEF4444);
     }
     if (warningName.contains('Cảnh báo')) {
-      return Colors.orange;
+      return const Color(0xFFFBBF24);
     }
-    return Colors.blue;
+    return const Color(0xFF0088FF);
   }
 }

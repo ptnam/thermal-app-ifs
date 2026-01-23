@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:thermal_mobile/core/constants/colors.dart';
 import 'package:thermal_mobile/core/constants/icons.dart';
 import 'package:thermal_mobile/core/constants/strings.dart';
+import 'package:thermal_mobile/domain/repositories/user_repository.dart';
+import 'package:thermal_mobile/main.dart' as app_main;
 import 'package:thermal_mobile/presentation/navigation/main_shell.dart';
 import '../../../domain/repositories/auth_repository.dart';
 import '../../../core/error/error_mapper.dart';
@@ -59,6 +61,9 @@ class _LoginScreenState extends State<LoginScreen> {
         password: _passwordController.text,
       );
 
+      // Register FCM token after successful login
+      await _registerFcmToken();
+
       if (!mounted) return;
       Navigator.of(
         context,
@@ -78,6 +83,50 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  /// Register FCM token for push notifications after login
+  Future<void> _registerFcmToken() async {
+    try {
+      // Get current user profile
+      final userRepository = getIt<IUserRepository>();
+      final userResult = await userRepository.getCurrentUser();
+
+      await userResult.fold(
+        (error) {
+          debugPrint(
+            '⚠️ Failed to get user for FCM registration: ${error.message}',
+          );
+        },
+        (user) async {
+          // Get access token
+          final tokens = await widget.authRepository.read();
+          if (tokens != null) {
+            // Register FCM token
+            final success = await app_main.messagingService.registerTokenForUser(
+              user: user,
+              accessToken: tokens.accessToken,
+            );
+            debugPrint('✅ FCM token registered for user: ${user.userName}');
+            
+            // Show success notification
+            // if (mounted && success) {
+            //   ScaffoldMessenger.of(context).showSnackBar(
+            //     const SnackBar(
+            //       content: Text('🔔 Đã đăng ký nhận thông báo đẩy'),
+            //       duration: Duration(seconds: 2),
+            //       behavior: SnackBarBehavior.floating,
+            //       backgroundColor: Colors.green,
+            //     ),
+            //   );
+            // }
+          }
+        },
+      );
+    } catch (e) {
+      debugPrint('⚠️ Error registering FCM token: $e');
+      // Don't block login flow if FCM registration fails
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -90,11 +139,7 @@ class _LoginScreenState extends State<LoginScreen> {
             children: [
               Column(
                 children: [
-                  Image.asset(
-                    AppIcons.icApp,
-                    width: 120,
-                    height: 120,
-                  ),
+                  Image.asset(AppIcons.icApp, width: 120, height: 120),
                   SizedBox(height: 16),
                   Text(
                     "IFS - AI",
@@ -131,10 +176,17 @@ class _LoginScreenState extends State<LoginScreen> {
                           cursorColor: Colors.blue,
                           decoration: InputDecoration(
                             labelText: 'Tên đăng nhập',
-                            labelStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
+                            labelStyle: TextStyle(
+                              color: Colors.white.withOpacity(0.7),
+                            ),
                             hintText: 'Nhập tên đăng nhập',
-                            hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
-                            prefixIcon: Icon(Icons.person_outline, color: Colors.white.withOpacity(0.7)),
+                            hintStyle: TextStyle(
+                              color: Colors.white.withOpacity(0.5),
+                            ),
+                            prefixIcon: Icon(
+                              Icons.person_outline,
+                              color: Colors.white.withOpacity(0.7),
+                            ),
                             filled: true,
                             fillColor: Colors.white.withOpacity(0.1),
                             enabledBorder: OutlineInputBorder(
@@ -178,10 +230,17 @@ class _LoginScreenState extends State<LoginScreen> {
                           cursorColor: Colors.blue,
                           decoration: InputDecoration(
                             labelText: 'Mật khẩu',
-                            labelStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
+                            labelStyle: TextStyle(
+                              color: Colors.white.withOpacity(0.7),
+                            ),
                             hintText: 'Nhập mật khẩu',
-                            hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
-                            prefixIcon: Icon(Icons.lock_outline, color: Colors.white.withOpacity(0.7)),
+                            hintStyle: TextStyle(
+                              color: Colors.white.withOpacity(0.5),
+                            ),
+                            prefixIcon: Icon(
+                              Icons.lock_outline,
+                              color: Colors.white.withOpacity(0.7),
+                            ),
                             suffixIcon: IconButton(
                               icon: Icon(
                                 _showPassword
@@ -231,7 +290,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             borderRadius: BorderRadius.circular(12),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFF0088FF).withOpacity(0.20),
+                                color: const Color(
+                                  0xFF0088FF,
+                                ).withOpacity(0.20),
                                 blurRadius: 4,
                                 spreadRadius: 2,
                                 offset: const Offset(0, 4),
@@ -244,8 +305,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                 : _doLogin,
                             style: FilledButton.styleFrom(
                               padding: const EdgeInsets.symmetric(vertical: 16),
-                              backgroundColor: const Color(0xFF377CF4).withOpacity(0.4),
-                              disabledBackgroundColor: Colors.grey.withOpacity(0.3),
+                              backgroundColor: const Color(
+                                0xFF377CF4,
+                              ).withOpacity(0.4),
+                              disabledBackgroundColor: Colors.grey.withOpacity(
+                                0.3,
+                              ),
                               elevation: 0,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -262,7 +327,13 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ),
                                     ),
                                   )
-                                : const Text('Đăng nhập', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),),
+                                : const Text(
+                                    'Đăng nhập',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
                           ),
                         ),
                         const SizedBox(height: 32),

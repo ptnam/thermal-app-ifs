@@ -1,40 +1,21 @@
 {
   "project_info": {
-    "project_number": "495821575923",
-    "project_id": "flutter-camera-8ba66",
-    "storage_bucket": "flutter-camera-8ba66.firebasestorage.app"
+    "project_number": "524070383945",
+    "project_id": "thermal-b13b9",
+    "storage_bucket": "thermal-b13b9.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:495821575923:android:db38c5475c5d577a728986",
+        "mobilesdk_app_id": "1:524070383945:android:f64c1c65c5f065a48eea98",
         "android_client_info": {
-          "package_name": "com.example.flutter_camera"
+          "package_name": "com.mtktech.thermal_app"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCa2M4Z4fUTtTZjZ2qPmqW6-wpDPO5EEcM"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:495821575923:android:ba15783d05b6a5f1728986",
-        "android_client_info": {
-          "package_name": "com.example.thermal_mobile"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyCa2M4Z4fUTtTZjZ2qPmqW6-wpDPO5EEcM"
+          "current_key": "AIzaSyAXoS2Zo9hKWV7nvd52AFTEyB5hyugnwl4"
         }
       ],
       "services": {

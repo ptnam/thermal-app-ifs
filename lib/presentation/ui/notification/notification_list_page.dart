@@ -32,59 +32,59 @@ class NotificationListPage extends StatelessWidget {
                   .subtract(const Duration(days: 7))
                   .toIso8601String(),
             },
-          ),   
+          ),
         );
         return bloc;
       },
       child: Scaffold(
         appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(
-          kToolbarHeight + 8 + 1,
-        ), // toolbar height + spacing + border
-        child: Container(
-          decoration: BoxDecoration(
-            border: Border(
-              bottom: BorderSide(
-                color: AppColors.line.withOpacity(0.32),
-                width: 1,
-              ),
-            ),
-          ),
-          child: AppBar(
-            automaticallyImplyLeading: false,
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            leading: InkWell(
-              onTap: () {
-                AppDrawerService.openDrawer();
-              },
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: SvgPicture.asset(
-                  AppIcons.icMenu,
-                  colorFilter: const ColorFilter.mode(
-                    Colors.white,
-                    BlendMode.srcIn,
-                  ),
-                  width: 24,
-                  height: 24,
+          preferredSize: const Size.fromHeight(
+            kToolbarHeight + 8 + 1,
+          ), // toolbar height + spacing + border
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: AppColors.line.withOpacity(0.32),
+                  width: 1,
                 ),
               ),
             ),
-            title: Text(
-              'Sự cố',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
+            child: AppBar(
+              automaticallyImplyLeading: false,
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              leading: InkWell(
+                onTap: () {
+                  AppDrawerService.openDrawer();
+                },
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: SvgPicture.asset(
+                    AppIcons.icMenu,
+                    colorFilter: const ColorFilter.mode(
+                      Colors.white,
+                      BlendMode.srcIn,
+                    ),
+                    width: 24,
+                    height: 24,
+                  ),
+                ),
               ),
-            ),
-            bottom: const PreferredSize(
-              preferredSize: Size.fromHeight(16),
-              child: SizedBox.shrink(),
+              title: Text(
+                'Sự cố',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              bottom: const PreferredSize(
+                preferredSize: Size.fromHeight(16),
+                child: SizedBox.shrink(),
+              ),
             ),
           ),
         ),
-      ),
         body: BlocBuilder<NotificationBloc, NotificationState>(
           builder: (context, state) {
             if (state is NotificationLoading) {
@@ -184,10 +184,7 @@ class NotificationCard extends StatelessWidget {
               gradient: const LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFF1A2332),
-                  Color(0xFF0F1419),
-                ],
+                colors: [Color(0xFF1A2332), Color(0xFF0F1419)],
               ),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
@@ -224,7 +221,8 @@ class NotificationCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            item.compareTypeObject?.name ?? 'So với pha min toàn trạm',
+                            item.compareTypeObject?.name ??
+                                'So với pha min toàn trạm',
                             style: const TextStyle(
                               fontSize: 13,
                               color: Color(0xFF94A3B8),
@@ -270,9 +268,7 @@ class NotificationCard extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: const Color(0xFF1E293B),
                           borderRadius: BorderRadius.circular(6),
-                          border: Border.all(
-                            color: const Color(0xFF334155),
-                          ),
+                          border: Border.all(color: const Color(0xFF334155)),
                         ),
                         child: Row(
                           children: [
@@ -304,9 +300,7 @@ class NotificationCard extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: const Color(0xFF1E293B),
                           borderRadius: BorderRadius.circular(6),
-                          border: Border.all(
-                            color: const Color(0xFF334155),
-                          ),
+                          border: Border.all(color: const Color(0xFF334155)),
                         ),
                         child: Row(
                           children: [
@@ -344,9 +338,7 @@ class NotificationCard extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: const Color(0xFF1E293B),
                         borderRadius: BorderRadius.circular(6),
-                        border: Border.all(
-                          color: const Color(0xFF334155),
-                        ),
+                        border: Border.all(color: const Color(0xFF334155)),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -513,11 +505,15 @@ class NotificationDetailPage extends StatelessWidget {
         return bloc;
       },
       child: Scaffold(
+        backgroundColor: AppColors.backgroundDark,
         appBar: AppBar(
-          title: const Text('Chi tiết thông báo'),
+          title: const Text(
+            'Chi tiết cảnh báo',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+          ),
+          backgroundColor: Colors.transparent,
           elevation: 0,
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black87,
+          iconTheme: const IconThemeData(color: Colors.white),
         ),
         body: BlocBuilder<NotificationBloc, NotificationState>(
           builder: (context, state) {
@@ -527,239 +523,170 @@ class NotificationDetailPage extends StatelessWidget {
             if (state is NotificationDetailLoaded) {
               final item = state.item;
               final statusColor = _getStatusColor(item.statusObject?.code);
-              final resultColor = _getResultColor(
-                item.compareResultObject?.code,
-              );
 
               return SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Header Card
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            statusColor.withOpacity(0.1),
-                            statusColor.withOpacity(0.05),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: statusColor.withOpacity(0.3)),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                    // Hero Image Section at top
+                    if (item.imagePath != null && item.imagePath!.isNotEmpty)
+                      Stack(
                         children: [
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
+                          Image.network(
+                            item.imagePath!,
+                            width: double.infinity,
+                            height: 280,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                width: double.infinity,
+                                height: 280,
+                                color: const Color(0xFF1A2332),
                                 child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Text(
-                                      item.warningEventName ?? 'Thông báo',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .headlineSmall
-                                          ?.copyWith(
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.black87,
-                                          ),
+                                    Icon(
+                                      Icons.broken_image_outlined,
+                                      size: 64,
+                                      color: Colors.grey.shade600,
                                     ),
-                                    const SizedBox(height: 8),
+                                    const SizedBox(height: 12),
                                     Text(
-                                      item.areaName ?? 'N/A',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyLarge
-                                          ?.copyWith(
-                                            color: Colors.grey.shade700,
-                                          ),
+                                      'Không thể tải hình ảnh',
+                                      style: TextStyle(
+                                        color: Colors.grey.shade500,
+                                        fontSize: 14,
+                                      ),
                                     ),
                                   ],
                                 ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+
+                    // Content
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Header Card with Warning Info
+                          _buildHeaderCard(context, item, statusColor),
+                          const SizedBox(height: 16),
+
+                          // Basic Info Card
+                          _buildDetailCard(
+                            context: context,
+                            title: 'Thông tin cơ bản',
+                            icon: Icons.info_outline,
+                            iconColor: const Color(0xFF60A5FA),
+                            children: [
+                              _buildDetailRow(
+                                icon: Icons.memory,
+                                label: 'Máy',
+                                value: item.machineName ?? 'N/A',
                               ),
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: statusColor.withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  item.statusObject?.name ?? 'N/A',
-                                  style: TextStyle(
-                                    color: statusColor,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 12,
+                              _buildDetailRow(
+                                icon: Icons.settings,
+                                label: 'Thành phần',
+                                value: item.machineComponentName ?? 'N/A',
+                              ),
+                              _buildDetailRow(
+                                icon: Icons.my_location,
+                                label: 'Điểm giám sát',
+                                value: item.monitorPointCode ?? 'N/A',
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Temperature Data Card
+                          if (item.componentValue != null ||
+                              item.compareValue != null ||
+                              item.deltaValue != null)
+                            _buildDetailCard(
+                              context: context,
+                              title: 'Dữ liệu nhiệt độ',
+                              icon: Icons.thermostat,
+                              iconColor: const Color(0xFFEF4444),
+                              children: [
+                                if (item.componentValue != null)
+                                  _buildDetailRow(
+                                    icon: Icons.thermostat,
+                                    label: 'Nhiệt độ hiện tại',
+                                    value:
+                                        '${item.componentValue?.toStringAsFixed(1)}°C',
+                                    valueColor: const Color(0xFFEF4444),
                                   ),
+                                if (item.compareValue != null)
+                                  _buildDetailRow(
+                                    icon: Icons.compare_arrows,
+                                    label: 'Nhiệt độ so sánh',
+                                    value: '${item.compareValue?.toStringAsFixed(1)}°C',
+                                  ),
+                                if (item.deltaValue != null)
+                                  _buildDetailRow(
+                                    icon: Icons.difference,
+                                    label: 'Chênh lệch',
+                                    value: '${(item.deltaValue ?? 0) > 0 ? '+' : ''}${item.deltaValue?.toStringAsFixed(1)}°C',
+                                    valueColor: (item.deltaValue ?? 0) > 0
+                                        ? const Color(0xFFEF4444)
+                                        : const Color(0xFF10B981),
+                                  ),
+                              ],
+                            ),
+                          if (item.componentValue != null ||
+                              item.compareValue != null ||
+                              item.deltaValue != null)
+                            const SizedBox(height: 16),
+
+                          // Comparison Card
+                          _buildDetailCard(
+                            context: context,
+                            title: 'Thông tin so sánh',
+                            icon: Icons.analytics,
+                            iconColor: const Color(0xFFFBBF24),
+                            children: [
+                              _buildDetailRow(
+                                icon: Icons.category,
+                                label: 'Loại so sánh',
+                                value: item.compareTypeObject?.name ?? 'N/A',
+                              ),
+                              _buildDetailRow(
+                                icon: Icons.check_circle,
+                                label: 'Kết quả',
+                                value: item.compareResultObject?.name ?? 'N/A',
+                                valueColor: _getResultColor(
+                                  item.compareResultObject?.code,
                                 ),
                               ),
                             ],
                           ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
+                          const SizedBox(height: 16),
 
-                    // Main Details
-                    _DetailCard(
-                      title: 'Thông tin cơ bản',
-                      children: [
-                        _DetailRow(
-                          label: 'Máy',
-                          value: item.machineName ?? 'N/A',
-                        ),
-                        _DetailRow(
-                          label: 'Thành phần',
-                          value: item.machineComponentName ?? 'N/A',
-                        ),
-                        _DetailRow(
-                          label: 'Điểm giám sát',
-                          value: item.monitorPointCode ?? 'N/A',
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Temperature Data
-                    if (item.compareMinTemperature != null ||
-                        item.compareMaxTemperature != null ||
-                        item.compareAveTemperature != null)
-                      _DetailCard(
-                        title: 'Dữ liệu nhiệt độ',
-                        children: [
-                          if (item.compareMinTemperature != null)
-                            _DetailRow(
-                              label: 'Nhiệt độ tối thiểu',
-                              value: '${item.compareMinTemperature}°C',
-                            ),
-                          if (item.compareMaxTemperature != null)
-                            _DetailRow(
-                              label: 'Nhiệt độ tối đa',
-                              value: '${item.compareMaxTemperature}°C',
-                            ),
-                          if (item.compareAveTemperature != null)
-                            _DetailRow(
-                              label: 'Nhiệt độ trung bình',
-                              value: '${item.compareAveTemperature}°C',
-                            ),
-                        ],
-                      ),
-                    if (item.compareMinTemperature != null ||
-                        item.compareMaxTemperature != null ||
-                        item.compareAveTemperature != null)
-                      const SizedBox(height: 16),
-
-                    // Comparison Data
-                    _DetailCard(
-                      title: 'So sánh',
-                      children: [
-                        _DetailRow(
-                          label: 'Giá trị hiện tại',
-                          value:
-                              item.componentValue?.toStringAsFixed(2) ?? 'N/A',
-                        ),
-                        _DetailRow(
-                          label: 'Giá trị so sánh',
-                          value: item.compareValue?.toStringAsFixed(2) ?? 'N/A',
-                        ),
-                        _DetailRow(
-                          label: 'Chênh lệch',
-                          value: item.deltaValue?.toStringAsFixed(2) ?? 'N/A',
-                        ),
-                        _DetailRow(
-                          label: 'Loại so sánh',
-                          value: item.compareTypeObject?.name ?? 'N/A',
-                        ),
-                        _DetailRowWithBadge(
-                          label: 'Kết quả',
-                          value: item.compareResultObject?.name ?? 'N/A',
-                          bgColor: resultColor.withOpacity(0.2),
-                          textColor: resultColor,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Time Information
-                    _DetailCard(
-                      title: 'Thời gian',
-                      children: [
-                        _DetailRow(
-                          label: 'Thời gian phát hiện',
-                          value: item.formattedDate ?? 'N/A',
-                        ),
-                        _DetailRow(
-                          label: 'Thời gian chi tiết',
-                          value: item.dataTime ?? 'N/A',
-                        ),
-                        if (item.resolveTime != null)
-                          _DetailRow(
-                            label: 'Thời gian xử lý',
-                            value: item.resolveTime!,
+                          // Location Card
+                          _buildDetailCard(
+                            context: context,
+                            title: 'Vị trí',
+                            icon: Icons.location_on,
+                            iconColor: const Color(0xFFEF4444),
+                            children: [
+                              _buildDetailRow(
+                                icon: Icons.business,
+                                label: 'Khu vực',
+                                value: item.areaName ?? 'N/A',
+                              ),
+                            ],
                           ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Image
-                    if (item.imagePath != null && item.imagePath!.isNotEmpty)
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Hình ảnh',
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(fontWeight: FontWeight.w600),
-                          ),
-                          const SizedBox(height: 12),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.network(
-                              item.imagePath!,
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                              height: 300,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Container(
-                                  height: 200,
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey.shade200,
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Center(
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.image_not_supported,
-                                          size: 48,
-                                          color: Colors.grey.shade400,
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          'Không thể tải hình ảnh',
-                                          style: TextStyle(
-                                            color: Colors.grey.shade600,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
+                          // Bottom padding for navigation bar
+                          SizedBox(
+                            height: MediaQuery.of(context).padding.bottom + 80,
                           ),
                         ],
                       ),
+                    ),
                   ],
                 ),
               );
@@ -777,7 +704,7 @@ class NotificationDetailPage extends StatelessWidget {
                     const SizedBox(height: 16),
                     Text(
                       state.message,
-                      style: Theme.of(context).textTheme.titleMedium,
+                      style: const TextStyle(color: Colors.white),
                     ),
                   ],
                 ),
@@ -790,29 +717,281 @@ class NotificationDetailPage extends StatelessWidget {
     );
   }
 
+  Widget _buildHeaderCard(
+    BuildContext context,
+    dynamic item,
+    Color statusColor,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            statusColor.withOpacity(0.15),
+            statusColor.withOpacity(0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: statusColor.withOpacity(0.3), width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: statusColor.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.warning_amber_rounded,
+                  color: statusColor,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            item.warningEventName ?? 'Quá nhiệt',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              color: statusColor,
+                              height: 1.2,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: statusColor.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: statusColor.withOpacity(0.4),
+                              width: 1,
+                            ),
+                          ),
+                          child: Text(
+                            item.statusObject?.name ?? 'Chưa xử lý',
+                            style: TextStyle(
+                              color: statusColor,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      item.formattedDate ?? '',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF94A3B8),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0F172A).withOpacity(0.5),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.location_on,
+                        size: 16,
+                        color: Color(0xFFEF4444),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          item.areaName ?? 'N/A',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.memory,
+                        size: 16,
+                        color: Color(0xFF60A5FA),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          item.machineName ?? 'N/A',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailCard({
+    required BuildContext context,
+    required String title,
+    required IconData icon,
+    required Color iconColor,
+    required List<Widget> children,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF1A2332), Color(0xFF0F1419)],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFF2D3748).withOpacity(0.5),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: iconColor.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, size: 18, color: iconColor),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          ...children
+              .expand((child) => [child, const SizedBox(height: 12)])
+              .toList()
+            ..removeLast(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailRow({
+    required IconData icon,
+    required String label,
+    required String value,
+    Color? valueColor,
+  }) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: const Color(0xFF64748B)),
+        const SizedBox(width: 10),
+        Expanded(
+          flex: 2,
+          child: Text(
+            label,
+            style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
+          ),
+        ),
+        Expanded(
+          flex: 3,
+          child: Text(
+            value,
+            style: TextStyle(
+              color: valueColor ?? Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.end,
+          ),
+        ),
+      ],
+    );
+  }
+
   Color _getStatusColor(String? code) {
     switch (code) {
       case 'Pending':
-        return Colors.orange;
+        return const Color(0xFFFBBF24);
       case 'Resolved':
-        return Colors.green;
+        return const Color(0xFF10B981);
       case 'Rejected':
-        return Colors.red;
+        return const Color(0xFFEF4444);
       default:
-        return Colors.grey;
+        return const Color(0xFFFBBF24);
     }
   }
 
   Color _getResultColor(String? code) {
     switch (code) {
       case 'Good':
-        return Colors.green;
+        return const Color(0xFF10B981);
       case 'Bad':
-        return Colors.red;
+        return const Color(0xFFEF4444);
       case 'Warning':
-        return Colors.orange;
+        return const Color(0xFFFBBF24);
       default:
-        return Colors.blue;
+        return const Color(0xFF60A5FA);
     }
   }
 }
@@ -828,14 +1007,21 @@ class _DetailCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF1A2332), Color(0xFF0F1419)],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFF2D3748).withOpacity(0.5),
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -844,9 +1030,10 @@ class _DetailCard extends StatelessWidget {
         children: [
           Text(
             title,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            style: const TextStyle(
+              fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: Colors.black87,
+              color: Colors.white,
             ),
           ),
           const SizedBox(height: 12),
@@ -873,15 +1060,14 @@ class _DetailRow extends StatelessWidget {
       children: [
         Text(
           label,
-          style: Theme.of(
-            context,
-          ).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
+          style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
         ),
         Text(
           value,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          style: const TextStyle(
             fontWeight: FontWeight.w500,
-            color: Colors.black87,
+            color: Colors.white,
+            fontSize: 14,
           ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
@@ -911,9 +1097,7 @@ class _DetailRowWithBadge extends StatelessWidget {
       children: [
         Text(
           label,
-          style: Theme.of(
-            context,
-          ).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
+          style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
         ),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),

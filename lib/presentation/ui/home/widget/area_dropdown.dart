@@ -123,41 +123,150 @@ class _AreaDropdownState extends State<AreaDropdown> {
   ) async {
     final selected = await showModalBottomSheet<AreaTree>(
       context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder: (context) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                height: 56,
-                alignment: Alignment.centerLeft,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text(
-                  'Chọn khu vực',
-                  style: Theme.of(context).textTheme.titleMedium,
+        return Container(
+          decoration: const BoxDecoration(
+            color: Color(0xFF1A2332),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Handle bar
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(top: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade600,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
-              ),
-              const Divider(height: 1),
-              SizedBox(
-                height: 320,
-                child: ListView.separated(
-                  itemBuilder: (context, index) {
-                    final a = areas[index];
-                    return ListTile(
-                      leading: const Icon(
-                        Icons.location_on,
-                        color: Colors.blue,
+                // Header
+                Container(
+                  height: 56,
+                  alignment: Alignment.centerLeft,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF3B82F6).withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.location_on,
+                          color: Color(0xFF3B82F6),
+                          size: 20,
+                        ),
                       ),
-                      title: Text(a.name),
-                      subtitle: a.levelName != null ? Text(a.levelName!) : null,
-                      onTap: () => Navigator.of(context).pop(a),
-                    );
-                  },
-                  separatorBuilder: (_, __) => const Divider(height: 1),
-                  itemCount: areas.length,
+                      const SizedBox(width: 12),
+                      Text(
+                        'Chọn khu vực',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+                Divider(height: 1, color: Colors.grey.shade700),
+                SizedBox(
+                  height: 360,
+                  child: ListView.builder(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    itemBuilder: (context, index) {
+                      final a = areas[index];
+                      final isSelected = _selected?.id == a.id;
+                      return InkWell(
+                        onTap: () => Navigator.of(context).pop(a),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 14,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? const Color(0xFF3B82F6).withOpacity(0.15)
+                                : Colors.transparent,
+                            border: Border(
+                              left: BorderSide(
+                                color: isSelected
+                                    ? const Color(0xFF3B82F6)
+                                    : Colors.transparent,
+                                width: 3,
+                              ),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? const Color(0xFF3B82F6).withOpacity(0.2)
+                                      : const Color(0xFF2D3748),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Icon(
+                                  Icons.location_on,
+                                  color: isSelected
+                                      ? const Color(0xFF3B82F6)
+                                      : Colors.grey.shade400,
+                                  size: 22,
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      a.name,
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: isSelected
+                                            ? FontWeight.w600
+                                            : FontWeight.w500,
+                                        color: isSelected
+                                            ? const Color(0xFF3B82F6)
+                                            : Colors.white,
+                                      ),
+                                    ),
+                                    if (a.levelName != null) ...[
+                                      const SizedBox(height: 3),
+                                      Text(
+                                        a.levelName!,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey.shade500,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                              if (isSelected)
+                                const Icon(
+                                  Icons.check_circle,
+                                  color: Color(0xFF3B82F6),
+                                  size: 22,
+                                ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                    itemCount: areas.length,
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
