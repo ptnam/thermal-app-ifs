@@ -41,7 +41,7 @@ class UserTokenApiService {
     required String userId,
     required String deviceType,
     required String token,
-    required List<String> areaIds,
+    List<String>? areaIds,
     required bool isAdmin,
     required String accessToken,
   }) async {
@@ -52,7 +52,7 @@ class UserTokenApiService {
       _logger.info(
         '🔑 FCM Token: ${token.isNotEmpty ? "Present (${token.length} chars)" : "Missing"}',
       );
-      _logger.info('📍 Area IDs: $areaIds');
+      _logger.info('📍 Area IDs: ${areaIds ?? ["0"]}');
       _logger.info('👑 Is Admin: $isAdmin');
 
       final headers = <String, String>{
@@ -67,7 +67,7 @@ class UserTokenApiService {
           'userId': userId,
           'deviceType': deviceType,
           'token': token,
-          'areaIds': areaIds,
+          'areaIds': areaIds ?? ["0"],
           'isAdmin': isAdmin,
         },
         options: Options(headers: headers),
@@ -75,6 +75,8 @@ class UserTokenApiService {
 
       _logger.info('✅ UserToken API: Response received');
       _logger.info('📊 Status: ${response.statusCode}');
+      _logger.info('📦 Data: ${response.data}');
+      _logger.info('✅ body: ${response.data.toString()}');
 
       return response.statusCode == 200;
     } catch (e) {
