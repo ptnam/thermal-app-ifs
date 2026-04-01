@@ -86,7 +86,7 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
-        title: 'Camera Vision',
+        title: 'IFS - AISOFT',
         theme: AppTheme.darkTheme,
         navigatorKey: navigatorKey,
         routes: routes,

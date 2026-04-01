@@ -70,6 +70,14 @@ class MachineThermalRepositoryImpl implements IMachineThermalRepository {
           final List<MachineThermalSummaryEntity> summaries = [];
 
           for (final machine in machines) {
+            // Skip sensors without machineId (independent sensors)
+            if (machine.deviceType == 'Sensor' && machine.machineId == 0) {
+              print(
+                '⏭️ MachineThermalRepo: Skipping independent sensor ${machine.name} (machineId=0)',
+              );
+              continue;
+            }
+
             try {
               print(
                 '🌡️ MachineThermalRepo: Fetching thermal for device ${machine.name} (id=${machine.machineId})',

@@ -7,6 +7,8 @@ class TemperatureFilterParams {
   final int? machineId;
   final String? machineName;
   final int? notificationStatus; // 1 = Pending (Chưa xử lý), 2 = Processed (Đã xử lý)
+  final String? compareType; // Loại so sánh: Enviroment, MinPhase, TwoArea, GlobalMinPhase, GlobalTwoArea
+  final String? compareTypeName;
 
   const TemperatureFilterParams({
     this.fromTime,
@@ -16,6 +18,8 @@ class TemperatureFilterParams {
     this.machineId,
     this.machineName,
     this.notificationStatus,
+    this.compareType,
+    this.compareTypeName,
   });
 
   TemperatureFilterParams copyWith({
@@ -26,9 +30,12 @@ class TemperatureFilterParams {
     int? machineId,
     String? machineName,
     int? notificationStatus,
+    String? compareType,
+    String? compareTypeName,
     bool clearAreaId = false,
     bool clearMachineId = false,
     bool clearNotificationStatus = false,
+    bool clearCompareType = false,
   }) {
     return TemperatureFilterParams(
       fromTime: fromTime ?? this.fromTime,
@@ -38,6 +45,8 @@ class TemperatureFilterParams {
       machineId: clearMachineId ? null : (machineId ?? this.machineId),
       machineName: clearMachineId ? null : (machineName ?? this.machineName),
       notificationStatus: clearNotificationStatus ? null : (notificationStatus ?? this.notificationStatus),
+      compareType: clearCompareType ? null : (compareType ?? this.compareType),
+      compareTypeName: clearCompareType ? null : (compareTypeName ?? this.compareTypeName),
     );
   }
 

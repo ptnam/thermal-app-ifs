@@ -255,6 +255,7 @@ class _NotificationPageState extends State<NotificationPage> {
                                     'machineId': result.machineId,
                                     'notificationStatus':
                                         result.notificationStatus,
+                                    'compareType': result.compareType,
                                     'page': 1,
                                     'pageSize': 20,
                                   }..removeWhere((k, v) => v == null),

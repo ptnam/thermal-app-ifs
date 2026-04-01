@@ -58,11 +58,11 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyD6uPjQ6xqoPuFhxtTNMHt1zNG8cOPmIKE',
-    appId: '1:495821575923:ios:c6954ba61042b594728986',
-    messagingSenderId: '495821575923',
-    projectId: 'flutter-camera-8ba66',
-    storageBucket: 'flutter-camera-8ba66.firebasestorage.app',
-    iosBundleId: 'com.example.thermalMobile',
+    apiKey: 'AIzaSyDg16s7JObQAz7K8WxyVBE1aIyGO98SZkk',
+    appId: '1:823669812203:ios:e984650a410421503f87ae',
+    messagingSenderId: '823669812203',
+    projectId: 'thermalmonitoring-eab3d',
+    storageBucket: 'thermalmonitoring-eab3d.firebasestorage.app',
+    iosBundleId: 'com.ifs.smartcamera',
   );
 }

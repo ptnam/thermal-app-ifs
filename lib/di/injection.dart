@@ -13,6 +13,7 @@ import 'package:thermal_mobile/data/network/api/base_url_provider.dart';
 import 'package:thermal_mobile/data/network/area/area_api_service.dart';
 import 'package:thermal_mobile/data/network/auth/auth_api_service.dart';
 import 'package:thermal_mobile/data/network/camera/camera_api_service.dart';
+import 'package:thermal_mobile/data/network/camera/camera_control_api_service.dart';
 import 'package:thermal_mobile/data/network/camera/camera_stream_api_service.dart';
 import 'package:thermal_mobile/data/network/machine/machine_api_service.dart';
 import 'package:thermal_mobile/data/network/notification/notification_api_service.dart';
@@ -25,6 +26,7 @@ import 'package:thermal_mobile/data/network/warning_event/warning_event_api_serv
 import 'package:thermal_mobile/data/repositories/area_repository_impl.dart';
 import 'package:thermal_mobile/data/repositories/auth_repository_impl.dart';
 import 'package:thermal_mobile/data/repositories/camera_repository_impl.dart';
+import 'package:thermal_mobile/data/repositories/camera_control_repository_impl.dart';
 import 'package:thermal_mobile/data/repositories/machine_repository_impl.dart';
 import 'package:thermal_mobile/data/repositories/notification_repository_impl.dart';
 import 'package:thermal_mobile/data/repositories/role_repository_impl.dart';
@@ -36,6 +38,7 @@ import 'package:thermal_mobile/data/repositories/machine_thermal_repository_impl
 import 'package:thermal_mobile/domain/repositories/area_repository.dart';
 import 'package:thermal_mobile/domain/repositories/auth_repository.dart';
 import 'package:thermal_mobile/domain/repositories/camera_repository.dart';
+import 'package:thermal_mobile/domain/repositories/camera_control_repository.dart';
 import 'package:thermal_mobile/domain/repositories/machine_repository.dart';
 import 'package:thermal_mobile/domain/repositories/notification_repository.dart';
 import 'package:thermal_mobile/domain/repositories/role_repository.dart';
@@ -46,6 +49,7 @@ import 'package:thermal_mobile/domain/repositories/warning_event_repository.dart
 import 'package:thermal_mobile/domain/repositories/machine_thermal_repository.dart';
 import 'package:thermal_mobile/domain/usecases/area_usecase.dart';
 import 'package:thermal_mobile/domain/usecases/camera_usecase.dart';
+import 'package:thermal_mobile/domain/usecases/camera_control_usecase.dart';
 import 'package:thermal_mobile/domain/usecases/notification_usecase.dart';
 import 'package:thermal_mobile/domain/usecases/machine_usecase.dart';
 import 'package:thermal_mobile/domain/usecases/thermal_data_usecase.dart';
@@ -54,6 +58,7 @@ import 'package:thermal_mobile/domain/usecases/get_warning_events_usecase.dart';
 import 'package:thermal_mobile/domain/usecases/machine_thermal_usecase.dart';
 import 'package:thermal_mobile/presentation/bloc/area/area_bloc.dart';
 import 'package:thermal_mobile/presentation/bloc/camera/camera_stream_bloc.dart';
+import 'package:thermal_mobile/presentation/bloc/camera/camera_control_bloc.dart';
 import 'package:thermal_mobile/presentation/bloc/machine/machine_bloc.dart';
 import 'package:thermal_mobile/presentation/bloc/machine/machine_settings_bloc.dart';
 import 'package:thermal_mobile/presentation/bloc/notification/notification_bloc.dart';
@@ -273,6 +278,15 @@ void _registerNetworkLayer() {
     ),
   );
 
+  // Camera Control API Service (for PTZ control)
+  getIt.registerLazySingleton<CameraControlApiService>(
+    () => CameraControlApiService(
+      getIt<Dio>(),
+      getIt<BaseUrlProvider>(),
+      logger: logger,
+    ),
+  );
+
   // Notification API Service
   getIt.registerLazySingleton<NotificationApiService>(
     () => NotificationApiService(
@@ -402,6 +416,14 @@ void _registerRepositories() {
     ),
   );
 
+  // Camera Control Repository
+  getIt.registerLazySingleton<CameraControlRepository>(
+    () => CameraControlRepositoryImpl(
+      cameraControlApiService: getIt<CameraControlApiService>(),
+      getAccessToken: getAccessToken,
+    ),
+  );
+
   // Notification Repository
   getIt.registerLazySingleton<NotificationRepository>(
     () => NotificationRepositoryImpl(
@@ -475,7 +497,6 @@ void _registerRepositories() {
   );
 
   // Legacy Data Sources (may be removed when all repos use new implementation)
-  final logger = getIt<AppLogger>();
 
   // Area Remote Data Source
   // getIt.registerLazySingleton<AreaRemoteDataSource>(
@@ -531,6 +552,10 @@ void _registerUseCases() {
   // Camera Use Cases
   getIt.registerLazySingleton<GetCameraStreamUseCase>(
     () => GetCameraStreamUseCase(getIt<CameraRepository>()),
+  );
+
+  getIt.registerLazySingleton<SendCameraControlUseCase>(
+    () => SendCameraControlUseCase(getIt<CameraControlRepository>()),
   );
 
   // Notification Use Cases
@@ -594,6 +619,14 @@ void _registerBlocs() {
   getIt.registerLazySingleton<CameraStreamBloc>(
     () => CameraStreamBloc(
       getCameraStreamUseCase: getIt<GetCameraStreamUseCase>(),
+    ),
+  );
+
+  // Camera Control BLoC
+  getIt.registerFactory<CameraControlBloc>(
+    () => CameraControlBloc(
+      sendCameraControlUseCase: getIt<SendCameraControlUseCase>(),
+      logger: logger,
     ),
   );
 

@@ -66,9 +66,7 @@ class CameraDto {
       description: json['description'] as String?,
       areaId: json['areaId'] as int?,
       areaName: json['areaName'] as String?,
-      cameraType: json['cameraType'] != null
-          ? CameraType.fromValue(_parseInt(json['cameraType']) ?? 0)
-          : null,
+      cameraType: CameraType.fromDynamic(json['cameraType']),
       status: CommonStatus.fromValue(_parseInt(json['status']) ?? 1),
       ipAddress: json['ipAddress'] as String?,
       port: json['port'] != null ? _parseInt(json['port']) : null,
@@ -177,9 +175,7 @@ class CameraShortenDto {
       name: json['name'] as String?,
       code: json['code'] as String?,
       areaId: json['areaId'] != null ? parseInt(json['areaId']) : null,
-      cameraType: json['cameraType'] != null
-          ? CameraType.fromValue(parseInt(json['cameraType']))
-          : null,
+      cameraType: CameraType.fromDynamic(json['cameraType']),
       streamUrl: json['streamUrl'] as String?,
       thumbnailUrl: json['thumbnailUrl'] as String?,
     );

@@ -239,12 +239,25 @@ class ThermalChartSeries {
 
   const ThermalChartSeries({required this.name, required this.data});
 
+  static double _parseChartValue(dynamic value) {
+    if (value == null) {
+      return 0;
+    }
+    if (value is num) {
+      return value.toDouble();
+    }
+    if (value is String) {
+      return double.tryParse(value) ?? 0;
+    }
+    return 0;
+  }
+
   factory ThermalChartSeries.fromJson(Map<String, dynamic> json) {
     return ThermalChartSeries(
       name: json['name'] as String? ?? '',
       data:
           (json['data'] as List<dynamic>?)
-              ?.map((e) => (e as num).toDouble())
+              ?.map(_parseChartValue)
               .toList() ??
           [],
     );
@@ -270,7 +283,7 @@ class ThermalDataMultiResponse {
     return ThermalDataMultiResponse(
       categories:
           (json['categories'] as List<dynamic>?)
-              ?.map((e) => e as String)
+          ?.map((e) => e?.toString() ?? '')
               .toList() ??
           [],
       chartData:

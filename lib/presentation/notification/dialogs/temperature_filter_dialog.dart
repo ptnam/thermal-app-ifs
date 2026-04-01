@@ -54,8 +54,18 @@ class _TemperatureFilterDialogState extends State<TemperatureFilterDialog> {
   int? areaId;
   int? machineId;
   int? notificationStatus;
+  String? compareType;
   List<DropdownMenuItem<int>> _currentMachineItems = [];
   bool _isLoadingMachines = false;
+
+  // Danh sách các loại so sánh
+  static const List<Map<String, String>> compareTypes = [
+    {'code': 'Enviroment', 'name': 'So với môi trường'},
+    {'code': 'MinPhase', 'name': 'Pha min'},
+    {'code': 'TwoArea', 'name': 'Phần tử cùng loại'},
+    {'code': 'GlobalMinPhase', 'name': 'Pha min toàn trạm'},
+    {'code': 'GlobalTwoArea', 'name': 'Phần tử cùng loại toàn trạm'},
+  ];
 
   @override
   void initState() {
@@ -67,6 +77,7 @@ class _TemperatureFilterDialogState extends State<TemperatureFilterDialog> {
     areaId = widget.initialParams.areaId;
     machineId = widget.initialParams.machineId;
     notificationStatus = widget.initialParams.notificationStatus;
+    compareType = widget.initialParams.compareType;
     _currentMachineItems = widget.machineItems;
   }
 
@@ -126,6 +137,7 @@ class _TemperatureFilterDialogState extends State<TemperatureFilterDialog> {
       areaId = null;
       machineId = null;
       notificationStatus = null;
+      compareType = null;
       _currentMachineItems = [];
     });
   }
@@ -138,6 +150,7 @@ class _TemperatureFilterDialogState extends State<TemperatureFilterDialog> {
         areaId: areaId,
         machineId: machineId,
         notificationStatus: notificationStatus,
+        compareType: compareType,
       ),
     );
   }
@@ -180,7 +193,7 @@ class _TemperatureFilterDialogState extends State<TemperatureFilterDialog> {
                         fontWeight: FontWeight.w600,                        color: Colors.white,                      ),
                     ),
                   ),
-                  TextButton(onPressed: _onReset, child: const Text('Đặt lại')),
+                  TextButton(onPressed: _onReset, child: const Text('Đặt lại', style: TextStyle(color: AppColors.primaryDark),)),
                 ],
               ),
             ),
@@ -303,6 +316,36 @@ class _TemperatureFilterDialogState extends State<TemperatureFilterDialog> {
                           isSelected: notificationStatus == 2,
                           onTap: () => setState(() => notificationStatus = 2),
                         ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // Comparison Type
+                    const Text(
+                      'Loại so sánh',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _StatusChip(
+                          label: 'Tất cả',
+                          isSelected: compareType == null,
+                          onTap: () => setState(() => compareType = null),
+                        ),
+                        ...compareTypes.map((type) => _StatusChip(
+                          label: type['name']!,
+                          color: AppColors.primaryDark,
+                          isSelected: compareType == type['code'],
+                          onTap: () => setState(() => compareType = type['code']),
+                        )),
                       ],
                     ),
                   ],

@@ -323,7 +323,8 @@ extension CameraDtoMapper on CameraDto {
         return CameraTypeEntity.thermal;
       case CameraType.vision:
         return CameraTypeEntity.optical; // Map vision to optical
-      // Note: CameraType enum only has thermal and vision
+      case CameraType.ptz:
+        return CameraTypeEntity.ptz;
     }
   }
 }
@@ -356,6 +357,8 @@ extension CameraEntityMapper on CameraEntity {
         return CameraType.thermal;
       case CameraTypeEntity.optical:
         return CameraType.vision;
+      case CameraTypeEntity.ptz:
+        return CameraType.ptz;
       case CameraTypeEntity.hybrid:
         return CameraType.vision; // Map hybrid to vision (no hybrid in DTO)
     }

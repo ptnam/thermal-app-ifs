@@ -33,11 +33,13 @@ class MachineResultEntity {
 /// Evaluation result entity for component status
 class EvaluationResultEntity {
   final String compareType;
+  final int? resultId;
   final String? resultCode;
   final String? resultName;
 
   const EvaluationResultEntity({
     required this.compareType,
+    this.resultId,
     this.resultCode,
     this.resultName,
   });
@@ -75,26 +77,37 @@ class ThermalComponentEntity {
     this.evaluationResults = const [],
   });
 
-  /// Get the worst evaluation status code from all results
-  /// Priority: Bad > Warning > Fair > Good
-  String? get worstStatusCode {
+  /// Get the worst evaluation status ID from all results
+  /// Priority: 4 (Xấu) > 3 (Trung bình) > 2 (Khá) > 1 (Tốt)
+  int? get worstStatusId {
     if (evaluationResults.isEmpty) return null;
     
-    const priority = {'Bad': 4, 'Warning': 3, 'Fair': 2, 'Good': 1};
-    String? worstCode;
-    int worstPriority = 0;
+    int? worstId;
     
     for (final result in evaluationResults) {
-      final code = result.resultCode;
-      if (code != null) {
-        final p = priority[code] ?? 0;
-        if (p > worstPriority) {
-          worstPriority = p;
-          worstCode = code;
+      final id = result.resultId;
+      if (id != null) {
+        // Higher ID = worse status (4 > 3 > 2 > 1)
+        if (worstId == null || id > worstId) {
+          worstId = id;
         }
       }
     }
-    return worstCode;
+    return worstId;
+  }
+
+  /// Get the worst evaluation status code from all results (legacy)
+  String? get worstStatusCode {
+    final id = worstStatusId;
+    if (id == null) return null;
+    
+    switch (id) {
+      case 4: return 'Bad';
+      case 3: return 'Warning';
+      case 2: return 'Fair';
+      case 1: return 'Good';
+      default: return null;
+    }
   }
 }
 
@@ -134,27 +147,37 @@ class MachineThermalSummaryEntity {
         a.minTemperature < b.minTemperature ? a : b);
   }
 
-  /// Get the worst evaluation status code from all components
-  /// Priority: Bad > Warning > Fair > Good
+  /// Get the worst evaluation status ID from all components
+  /// Priority: 4 (Xấu) > 3 (Trung bình) > 2 (Khá) > 1 (Tốt)
   /// Returns null if no evaluation data
-  String? get worstStatusCode {
+  int? get worstStatusId {
     if (components.isEmpty) return null;
     
-    const priority = {'Bad': 4, 'Warning': 3, 'Fair': 2, 'Good': 1};
-    String? worstCode;
-    int worstPriority = 0;
+    int? worstId;
     
     for (final component in components) {
-      final code = component.worstStatusCode;
-      if (code != null) {
-        final p = priority[code] ?? 0;
-        if (p > worstPriority) {
-          worstPriority = p;
-          worstCode = code;
+      final id = component.worstStatusId;
+      if (id != null) {
+        if (worstId == null || id > worstId) {
+          worstId = id;
         }
       }
     }
-    return worstCode;
+    return worstId;
+  }
+
+  /// Get the worst evaluation status code from all components (legacy)
+  String? get worstStatusCode {
+    final id = worstStatusId;
+    if (id == null) return null;
+    
+    switch (id) {
+      case 4: return 'Bad';
+      case 3: return 'Warning';
+      case 2: return 'Fair';
+      case 1: return 'Good';
+      default: return null;
+    }
   }
 }
 

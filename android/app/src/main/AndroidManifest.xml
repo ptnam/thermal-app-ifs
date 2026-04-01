@@ -6,7 +6,7 @@
     
     <application
         android:label="thermal_mobile"
-        android:name="${applicationName}"
+        android:name="IFS - AISOFT"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"

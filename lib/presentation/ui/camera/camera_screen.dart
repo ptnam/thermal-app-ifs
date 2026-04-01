@@ -428,44 +428,24 @@ class _AreaChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(20),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
           decoration: BoxDecoration(
-            color: isSelected
-                ? AppColors.primaryDark
-                : colorScheme.surfaceContainerHighest,
+            color: isSelected ? const Color(0xFF5B6FE5) : Colors.transparent,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: isSelected
-                  ? AppColors.backgroundDark
-                  : colorScheme.outline.withOpacity(0.3),
-              width: 1.5,
-            ),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.location_on_rounded,
-                size: 18,
-                color: isSelected ? Colors.white : colorScheme.onSurface,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                area.name,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: isSelected ? Colors.white : colorScheme.onSurface,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                ),
-              ),
-            ],
+          child: Text(
+            area.name,
+            style: TextStyle(
+              color: isSelected ? Colors.white : const Color(0xFF94A3B8),
+              fontSize: 14,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+            ),
           ),
         ),
       ),
@@ -544,6 +524,7 @@ class _AreaTreeTileState extends State<AreaTreeTile>
                       builder: (context) => CameraStreamPage(
                         cameraId: widget.area.id,
                         cameraName: widget.area.name,
+                        isPtzCamera: false,
                       ),
                     ),
                   );
@@ -737,7 +718,6 @@ class _CameraTileState extends State<CameraTile>
   VideoPlayerController? _videoController;
   bool _isInitialized = false;
   bool _hasError = false;
-  String? _errorMessage;
   bool _isVisible = false;
   bool _isActive = true; // Track if tile should be active
   String? _pendingStreamUrl; // Store stream URL until visible
@@ -877,7 +857,6 @@ class _CameraTileState extends State<CameraTile>
       if (mounted) {
         setState(() {
           _hasError = true;
-          _errorMessage = e.toString();
         });
       }
     }
@@ -962,6 +941,8 @@ class _CameraTileState extends State<CameraTile>
                     builder: (context) => CameraStreamPage(
                       cameraId: widget.camera.id,
                       cameraName: widget.camera.name,
+                      isPtzCamera:
+                          widget.camera.cameraType == CameraTypeEntity.ptz,
                     ),
                   ),
                 );
@@ -1134,9 +1115,5 @@ class _CameraTileState extends State<CameraTile>
         ),
       ),
     );
-  }
-
-  Color _getStatusColor(bool isActive) {
-    return isActive ? Colors.green : Colors.red;
   }
 }

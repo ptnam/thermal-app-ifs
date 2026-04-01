@@ -73,8 +73,8 @@ class _DeviceStatusPieChartState extends State<DeviceStatusPieChart> {
   }
 
   /// Calculate device statistics based on evaluation results from API
-  /// Each device gets the "lowest" (worst) status among all its components
-  /// Devices without evaluation data default to "Good" status
+  /// Counts each component/part within machines, not just machines
+  /// Components without evaluation data default to "Good" status
   Map<DeviceStatus, int> _calculateDeviceStatistics(
       List<MachineThermalSummaryEntity> machines) {
     final stats = <DeviceStatus, int>{
@@ -84,28 +84,35 @@ class _DeviceStatusPieChartState extends State<DeviceStatusPieChart> {
       DeviceStatus.bad: 0,
     };
 
+    int totalComponents = 0;
+
     for (final machine in machines) {
-      // Get worst status from API evaluation results
-      final worstCode = machine.worstStatusCode;
-      final status = _codeToStatus(worstCode);
-      stats[status] = (stats[status] ?? 0) + 1;
+      // Iterate over each component within the machine
+      for (final component in machine.components) {
+        totalComponents++;
+        // Get worst status from component's evaluation results using ID
+        final worstId = component.worstStatusId;
+        final status = _idToStatus(worstId);
+        stats[status] = (stats[status] ?? 0) + 1;
+      }
     }
 
     debugPrint(
-        '📊 DeviceStatusPieChart: Stats calculated - Good: ${stats[DeviceStatus.good]}, Fair: ${stats[DeviceStatus.fair]}, Average: ${stats[DeviceStatus.average]}, Bad: ${stats[DeviceStatus.bad]}');
+        '📊 DeviceStatusPieChart: Stats calculated - Total components: $totalComponents, Good: ${stats[DeviceStatus.good]}, Fair: ${stats[DeviceStatus.fair]}, Average: ${stats[DeviceStatus.average]}, Bad: ${stats[DeviceStatus.bad]}');
     return stats;
   }
 
-  /// Convert API status code to DeviceStatus enum
-  DeviceStatus _codeToStatus(String? code) {
-    switch (code) {
-      case 'Bad':
+  /// Convert API status ID to DeviceStatus enum
+  /// 1 = Tốt, 2 = Khá, 3 = Trung bình, 4 = Xấu
+  DeviceStatus _idToStatus(int? id) {
+    switch (id) {
+      case 4:
         return DeviceStatus.bad;
-      case 'Warning':
+      case 3:
         return DeviceStatus.average;
-      case 'Fair':
+      case 2:
         return DeviceStatus.fair;
-      case 'Good':
+      case 1:
         return DeviceStatus.good;
       default:
         return DeviceStatus.good; // Default to good if no data

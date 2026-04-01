@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:thermal_mobile/core/constants/colors.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../di/injection.dart';
@@ -143,6 +144,7 @@ class SettingPage extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: AppColors.backgroundDark,
         title: const Text('Xác nhận đăng xuất'),
         content: const Text('Bạn có chắc chắn muốn đăng xuất khỏi ứng dụng?'),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),

@@ -68,7 +68,7 @@ Mỗi báo cáo bao gồm:
 ```
 ================================================================================
 🏢 AREA API INTEGRATION TESTS
-Base URL: https://thermal.infosysvietnam.com.vn:10253/api
+Base URL: https://thermal.infosysvietnam.vn:10253/api
 ================================================================================
 
 🔐 Logging in...

@@ -19,6 +19,9 @@ typedef PtzStopCallback = void Function();
 /// Features: Show/hide toggle, speed control, directional buttons
 /// Responsive layout for portrait and landscape modes
 class PtzDpadController extends StatefulWidget {
+  static const double minSpeed = 0;
+  static const double maxSpeed = 60;
+
   final PtzMoveCallback? onMove;
   final PtzStopCallback? onStop;
   final bool initiallyVisible;
@@ -29,7 +32,7 @@ class PtzDpadController extends StatefulWidget {
     this.onMove,
     this.onStop,
     this.initiallyVisible = true,
-    this.initialSpeed = 0.5,
+    this.initialSpeed = 10,
   });
 
   @override
@@ -49,7 +52,10 @@ class _PtzDpadControllerState extends State<PtzDpadController>
   void initState() {
     super.initState();
     _isVisible = widget.initiallyVisible;
-    _speed = widget.initialSpeed;
+    _speed = widget.initialSpeed.clamp(
+      PtzDpadController.minSpeed,
+      PtzDpadController.maxSpeed,
+    );
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 200),
       vsync: this,
@@ -252,7 +258,7 @@ class _PtzDpadControllerState extends State<PtzDpadController>
               ),
               const SizedBox(width: 6),
               Text(
-                'Tốc độ: ${(_speed * 100).toInt()}%',
+                'Tốc độ: ${_speed.toInt()}',
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 12,
@@ -295,7 +301,7 @@ class _PtzDpadControllerState extends State<PtzDpadController>
           ),
           const SizedBox(width: 6),
           Text(
-            '${(_speed * 100).toInt()}%',
+            _speed.toInt().toString(),
             style: const TextStyle(
               color: Colors.white,
               fontSize: 11,
@@ -324,9 +330,9 @@ class _PtzDpadControllerState extends State<PtzDpadController>
       ),
       child: Slider(
         value: _speed,
-        min: 0.1,
-        max: 1.0,
-        divisions: 9,
+        min: PtzDpadController.minSpeed,
+        max: PtzDpadController.maxSpeed,
+        divisions: PtzDpadController.maxSpeed.toInt(),
         onChanged: (value) {
           setState(() {
             _speed = value;

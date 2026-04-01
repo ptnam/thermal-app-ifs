@@ -31,7 +31,7 @@ class NotificationApiService {
   // ─────────────────────────────────────────────────────────────────────────
 
   /// Get paginated notification list with typed response
-  /// Backend params: fromTime, areaId, machineId, notificationStatus, page, pageSize
+  /// Backend params: fromTime, areaId, machineId, notificationStatus, compareType, page, pageSize
   /// Note: toTime is optional - web frontend doesn't send it
   Future<ApiResult<PagingResponse<NotificationExtendDto>>> getNotificationList({
     required String accessToken,
@@ -41,6 +41,7 @@ class NotificationApiService {
     NotificationStatus? notificationStatus,
     int? machineId,
     int? areaId,
+    String? compareType,
   }) async {
     _logger.info('Fetching notification list: page=$page');
 
@@ -58,6 +59,7 @@ class NotificationApiService {
         'notificationStatus': notificationStatus.value,
       if (machineId != null) 'machineId': machineId,
       if (areaId != null) 'areaId': areaId,
+      // Note: compareType is filtered client-side, not supported by API
     };
 
     _logger.info('Query params: $queryParams');

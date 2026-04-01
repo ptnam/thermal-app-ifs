@@ -61,6 +61,8 @@ dependencies:
   firebase_core: ^4.4.0
   firebase_messaging: ^16.1.1
   flutter_local_notifications: ^19.5.0
+  icons_launcher: ^3.1.0
+  flutter_native_splash: ^2.4.7
 
 dev_dependencies:
   flutter_test:
@@ -127,3 +129,20 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+# dart pub add icons_launcher
+# dart run icons_launcher:create
+icons_launcher:
+  image_path: "assets/logo/ic_logo.png"
+  platforms:
+    android:
+      enable: true
+    ios:
+      enable: true
+# flutter pub add flutter_native_splash
+# dart run flutter_native_splash:create
+flutter_native_splash:
+  color: "#ffffff"
+  image: assets/logo/ic_app.png
+  android: true
+  ios: true

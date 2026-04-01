@@ -1,7 +1,7 @@
 /// =============================================================================
 /// File: camera_entity.dart
 /// Description: Camera domain entity
-/// 
+///
 /// Purpose:
 /// - Pure domain model for camera management
 /// - Used in thermal camera monitoring
@@ -10,11 +10,7 @@
 import 'machine_entity.dart';
 
 /// Camera type classification
-enum CameraTypeEntity {
-  thermal,
-  optical,
-  hybrid,
-}
+enum CameraTypeEntity { thermal, optical, ptz, hybrid }
 
 /// Domain entity representing a Camera
 class CameraEntity {
@@ -56,6 +52,7 @@ class CameraEntity {
 
   bool get isActive => status == EntityStatus.active;
   bool get isThermal => cameraType == CameraTypeEntity.thermal;
+  bool get isPtz => cameraType == CameraTypeEntity.ptz;
   bool get hasStream => streamUrl?.isNotEmpty == true;
   bool get hasThumbnail => thumbnailUrl?.isNotEmpty == true;
 

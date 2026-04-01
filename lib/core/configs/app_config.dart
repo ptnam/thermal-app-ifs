@@ -25,7 +25,7 @@ class DevConfig implements AppConfig {
     if (_configStorage != null) {
       return _configStorage!.getApiBaseUrl();
     }
-    return 'https://thermal.infosysvietnam.com.vn:10253';
+    return 'https://thermal.infosysvietnam.vn:10253';
   }
 
   @override
@@ -33,7 +33,7 @@ class DevConfig implements AppConfig {
     if (_configStorage != null) {
       return _configStorage!.getStreamUrl();
     }
-    return 'https://thermal.infosysvietnam.com.vn:1984/api/stream.m3u8?src=';
+    return 'https://thermal.infosysvietnam.vn:1984/api/stream.m3u8?src=';
   }
 
   @override
@@ -69,7 +69,7 @@ class ProdConfig implements AppConfig {
     if (_configStorage != null) {
       return _configStorage!.getApiBaseUrl();
     }
-    return 'https://thermal.infosysvietnam.com.vn:10253';
+    return 'https://thermal.infosysvietnam.vn:10253';
   }
 
   @override
@@ -77,7 +77,7 @@ class ProdConfig implements AppConfig {
     if (_configStorage != null) {
       return _configStorage!.getStreamUrl();
     }
-    return 'https://thermal.infosysvietnam.com.vn:1984/api/stream.m3u8?src=';
+    return 'https://thermal.infosysvietnam.vn:1984/api/stream.m3u8?src=';
   }
 
   @override
@@ -113,7 +113,7 @@ class StagingConfig implements AppConfig {
     if (_configStorage != null) {
       return _configStorage!.getApiBaseUrl();
     }
-    return 'https://thermal.infosysvietnam.com.vn:10253';
+    return 'https://thermal.infosysvietnam.vn:10253';
   }
 
   @override
@@ -121,7 +121,7 @@ class StagingConfig implements AppConfig {
     if (_configStorage != null) {
       return _configStorage!.getStreamUrl();
     }
-    return 'https://thermal.infosysvietnam.com.vn:1984/api/stream.m3u8?src=';
+    return 'https://thermal.infosysvietnam.vn:1984/api/stream.m3u8?src=';
   }
 
   @override

@@ -7,7 +7,7 @@ class ConfigStorage {
   static const String _keyStreamPort = 'app_stream_port';
 
   // Giá trị mặc định
-  static const String defaultDomain = 'thermal.infosysvietnam.com.vn';
+  static const String defaultDomain = 'thermal.infosysvietnam.vn';
   static const String defaultPort = '10253';
   static const String defaultStreamPort = '1984';
 

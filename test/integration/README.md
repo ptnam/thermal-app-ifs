@@ -41,7 +41,7 @@ class IntegrationTestConfig {
 
 Đảm bảo server đang chạy tại:
 ```
-https://thermal.infosysvietnam.com.vn:10253
+https://thermal.infosysvietnam.vn:10253
 ```
 
 ## 🧪 Chạy Tests
@@ -133,7 +133,7 @@ Data count: 5
 ❌ Login failed: Invalid credentials
 ⚠️  Vui lòng kiểm tra:
   1. Username/password trong test/integration/config/test_config.dart
-  2. Server có đang chạy: https://thermal.infosysvietnam.com.vn:10253
+  2. Server có đang chạy: https://thermal.infosysvietnam.vn:10253
   3. Network connection
 ```
 

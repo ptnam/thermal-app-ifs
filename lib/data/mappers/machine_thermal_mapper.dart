@@ -27,6 +27,7 @@ class MachineThermalMapper {
         evaluationResults.add(
           EvaluationResultEntity(
             compareType: key,
+            resultId: thermalResult.compareResultObject!.id,
             resultCode: thermalResult.compareResultObject!.code,
             resultName: thermalResult.compareResultObject!.name,
           ),

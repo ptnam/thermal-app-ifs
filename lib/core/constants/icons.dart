@@ -1,5 +1,5 @@
 class AppIcons {
-  static get icApp => 'assets/logo/ic_app.png';
+  static get icApp => 'assets/logo/ic_app.svg';
   static get icMenu => 'assets/icons/ic_menu.svg';
 
   static get icHome => 'assets/icons/ic_home.svg';

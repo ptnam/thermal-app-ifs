@@ -115,6 +115,8 @@ class _TemperatureExtremeCardState extends State<TemperatureExtremeCard> {
                       label: 'Cao nhất',
                       temperature: hottest.maxTemperature,
                       machineName: hottest.machine.name,
+                      machineComponentName:
+                          hottest.hottestComponent?.machineComponentName,
                       color: Colors.red,
                     ),
                   ),
@@ -127,6 +129,8 @@ class _TemperatureExtremeCardState extends State<TemperatureExtremeCard> {
                       label: 'Thấp nhất',
                       temperature: coldest.minTemperature,
                       machineName: coldest.machine.name,
+                      machineComponentName:
+                          coldest.coldestComponent?.machineComponentName,
                       color: Colors.blue,
                     ),
                   ),
@@ -144,6 +148,7 @@ class _TemperatureItem extends StatelessWidget {
   final String label;
   final double? temperature;
   final String machineName;
+  final String? machineComponentName;
   final Color color;
 
   const _TemperatureItem({
@@ -151,12 +156,17 @@ class _TemperatureItem extends StatelessWidget {
     required this.label,
     required this.temperature,
     required this.machineName,
+    this.machineComponentName,
     required this.color,
   });
 
   @override
   Widget build(BuildContext context) {
     final bool isHot = icon == '🔥';
+    final componentName = machineComponentName?.trim() ?? '';
+    final machineDisplayName = componentName.isNotEmpty
+      ? '$machineName - $componentName'
+      : machineName;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -229,8 +239,8 @@ class _TemperatureItem extends StatelessWidget {
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 300),
             child: Text(
-              key: ValueKey(machineName),
-              machineName,
+              key: ValueKey(machineDisplayName),
+              machineDisplayName,
               style: const TextStyle(
                 color: Color(0xFF64748B),
                 fontSize: 12,

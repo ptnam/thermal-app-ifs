@@ -45,9 +45,7 @@ class AreaRepositoryImpl implements AreaRepository {
   Future<Either<Failure, List<AreaTree>>> getAreaAllTree() async {
     try {
       final token = await _getAccessToken();
-      final result = await _areaApiService.getAreaAllTree(
-        accessToken: token,
-      );
+      final result = await _areaApiService.getAreaAllTree(accessToken: token);
 
       return result.fold(
         onFailure: (error) => Left(
@@ -171,6 +169,8 @@ class AreaRepositoryImpl implements AreaRepository {
         return CameraTypeEntity.thermal;
       case CameraType.vision:
         return CameraTypeEntity.optical; // vision -> optical (closest match)
+      case CameraType.ptz:
+        return CameraTypeEntity.ptz;
     }
   }
 
@@ -204,7 +204,11 @@ class AreaRepositoryImpl implements AreaRepository {
   }
 
   @override
-  Future<Either<Failure, PagingResponse<AreaDto>>> getAreaList({int page = 1, int pageSize = 20, CommonStatus? status}) {
+  Future<Either<Failure, PagingResponse<AreaDto>>> getAreaList({
+    int page = 1,
+    int pageSize = 20,
+    CommonStatus? status,
+  }) {
     // TODO: implement getAreaList
     throw UnimplementedError();
   }

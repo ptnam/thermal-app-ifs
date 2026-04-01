@@ -12,7 +12,7 @@ class IntegrationTestConfig {
   // =========================================================================
   // BASE URL
   // =========================================================================
-  static const String baseUrl = 'https://thermal.infosysvietnam.com.vn:10253';
+  static const String baseUrl = 'https://thermal.infosysvietnam.vn:10253';
   
   // =========================================================================
   // TEST CREDENTIALS - ⚠️ THAY ĐỔI THEO TÀI KHOẢN TEST CỦA BẠN

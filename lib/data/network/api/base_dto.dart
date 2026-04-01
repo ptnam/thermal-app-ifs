@@ -1,7 +1,7 @@
 /// =============================================================================
 /// File: base_dto.dart
 /// Description: Base DTO classes for common response patterns
-/// 
+///
 /// Purpose:
 /// - ShortenBaseDto: Minimal reference model with id/name
 /// - CommonStatus: Entity status enum
@@ -9,17 +9,14 @@
 /// =============================================================================
 
 /// Minimal entity reference with just id and name
-/// 
+///
 /// Maps to backend's ShortenBaseDto:
 /// Used for dropdown lists, references, and quick lookups
 class ShortenBaseDto {
   final int id;
   final String name;
 
-  const ShortenBaseDto({
-    required this.id,
-    required this.name,
-  });
+  const ShortenBaseDto({required this.id, required this.name});
 
   factory ShortenBaseDto.fromJson(Map<String, dynamic> json) {
     return ShortenBaseDto(
@@ -29,10 +26,7 @@ class ShortenBaseDto {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-    };
+    return {'id': id, 'name': name};
   }
 
   @override
@@ -52,10 +46,10 @@ class ShortenBaseDto {
 enum CommonStatus {
   /// Active/enabled status
   active(1),
-  
+
   /// Inactive/disabled status
   inactive(0),
-  
+
   /// Deleted/archived status
   deleted(-1);
 
@@ -107,8 +101,8 @@ enum UserStatus {
 /// Notification status enum
 /// Maps to backend's NotificationStatus enum
 enum NotificationStatus {
-  pending(1),     // Chưa xử lý
-  processed(2);   // Đã xử lý (Resolved)
+  pending(1), // Chưa xử lý
+  processed(2); // Đã xử lý (Resolved)
 
   final int value;
   const NotificationStatus(this.value);
@@ -155,7 +149,8 @@ enum TemperatureLevel {
 /// Camera type enum
 enum CameraType {
   thermal(1),
-  vision(2);
+  vision(2),
+  ptz(3);
 
   final int value;
   const CameraType(this.value);
@@ -166,9 +161,41 @@ enum CameraType {
         return CameraType.thermal;
       case 2:
         return CameraType.vision;
+      case 3:
+        return CameraType.ptz;
       default:
         return CameraType.thermal;
     }
+  }
+
+  static CameraType? fromDynamic(dynamic value) {
+    if (value == null) return null;
+
+    if (value is int) {
+      return fromValue(value);
+    }
+
+    if (value is String) {
+      final normalized = value.trim().toLowerCase();
+      final asInt = int.tryParse(normalized);
+      if (asInt != null) {
+        return fromValue(asInt);
+      }
+
+      switch (normalized) {
+        case 'thermal':
+          return CameraType.thermal;
+        case 'vision':
+        case 'optical':
+          return CameraType.vision;
+        case 'ptz':
+          return CameraType.ptz;
+        default:
+          return null;
+      }
+    }
+
+    return null;
   }
 
   String toQueryParam() => value.toString();

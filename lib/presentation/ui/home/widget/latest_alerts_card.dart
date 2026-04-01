@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:thermal_mobile/core/constants/colors.dart';
 import 'package:thermal_mobile/di/injection.dart';
 import 'package:thermal_mobile/presentation/bloc/notification/notification_bloc.dart';
 import 'package:thermal_mobile/presentation/bloc/vision_notification/vision_notification_bloc.dart';
 import 'package:thermal_mobile/presentation/ui/notification/notification_list_page.dart';
-import 'package:thermal_mobile/presentation/ui/vision_notification/vision_notification_list_screen.dart';
+import 'package:thermal_mobile/presentation/ui/vision_notification/vision_notification_detail_screen.dart';
 
 class LatestAlertsCard extends StatefulWidget {
   final int? areaId;
@@ -204,7 +203,10 @@ class _LatestAlertsCardState extends State<LatestAlertsCard> {
                           itemBuilder: (context, index) {
                             final item = items[index];
                             return _AlertItem(
-                              icon: '🚶',
+                              icon: _resolveAiAlertIcon(
+                                warningName: item.warningEventName,
+                                inArea: item.inArea,
+                              ),
                               title: item.warningEventName,
                               subtitle: item.areaName,
                               time: _formatRelativeTimeFromDateTime(
@@ -214,7 +216,7 @@ class _LatestAlertsCardState extends State<LatestAlertsCard> {
                                 Navigator.of(context).push(
                                   MaterialPageRoute(
                                     builder: (_) =>
-                                        const VisionNotificationListScreen(),
+                                        VisionNotificationDetailScreen(notification: item),
                                   ),
                                 );
                               },
@@ -259,13 +261,23 @@ class _LatestAlertsCardState extends State<LatestAlertsCard> {
                           itemBuilder: (context, index) {
                             final item = items[index];
                             return _AlertItem(
-                              icon: '🚶',
+                              icon: _resolveAiAlertIcon(
+                                warningName: item.warningEventName,
+                                inArea: item.inArea,
+                              ),
                               title: item.warningEventName,
                               subtitle: item.areaName,
                               time: _formatRelativeTimeFromDateTime(
                                 item.alertTime,
                               ),
-                              onTap: () {},
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        VisionNotificationDetailScreen(notification: item),
+                                  ),
+                                );
+                              },
                             );
                           },
                           separatorBuilder: (_, __) =>
@@ -331,6 +343,96 @@ class _LatestAlertsCardState extends State<LatestAlertsCard> {
         '${dateTime.hour.toString().padLeft(2, '0')}:'
         '${dateTime.minute.toString().padLeft(2, '0')}:'
         '${dateTime.second.toString().padLeft(2, '0')}';
+  }
+
+  String _resolveAiAlertIcon({
+    required String warningName,
+    required bool inArea,
+  }) {
+    final name = warningName.toLowerCase();
+
+    if (name.contains('khói') ||
+        name.contains('khoi') ||
+        name.contains('smoke')) {
+      return '💨';
+    }
+
+    if (name.contains('cháy') ||
+        name.contains('chay') ||
+        name.contains('lửa') ||
+        name.contains('lua') ||
+        name.contains('fire')) {
+      return '🔥';
+    }
+
+    if (name.contains('mũ') ||
+        name.contains('mu') ||
+        name.contains('helmet') ||
+        name.contains('ppe') ||
+        name.contains('đồ bảo hộ') ||
+        name.contains('bao ho')) {
+      return '⛑️';
+    }
+
+    if (name.contains('tàu') ||
+        name.contains('tau') ||
+        name.contains('thuyền') ||
+        name.contains('thuyen') ||
+        name.contains('boat') ||
+        name.contains('ship') ||
+        name.contains('vessel')) {
+      return '⛵';
+    }
+
+    if (name.contains('xe tải') ||
+        name.contains('xe tai') ||
+        name.contains('truck') ||
+        name.contains('lorry')) {
+      return '🚚';
+    }
+
+    if (name.contains('xe máy') ||
+        name.contains('xe may') ||
+        name.contains('mô tô') ||
+        name.contains('mo to') ||
+        name.contains('motorbike') ||
+        name.contains('motorcycle') ||
+        name.contains('scooter')) {
+      return '🏍️';
+    }
+
+    if (name.contains('xe đạp') ||
+        name.contains('xe dap') ||
+        name.contains('bicycle') ||
+        name.contains('bike') ||
+        name.contains('cycle')) {
+      return '🚲';
+    }
+
+    if (name.contains('ô tô') ||
+        name.contains('o to') ||
+        name.contains('car') ||
+        name.contains('automobile') ||
+        name.contains('sedan')) {
+      return '🚗';
+    }
+
+    if (name.contains('vehicle') || name.contains('xe')) {
+      return '🚙';
+    }
+
+    if (name.contains('xâm nhập') ||
+        name.contains('xam nhap') ||
+        name.contains('đột nhập') ||
+        name.contains('dot nhap') ||
+        name.contains('người') ||
+        name.contains('nguoi') ||
+        name.contains('person') ||
+        name.contains('intrusion')) {
+      return '🚶';
+    }
+
+    return inArea ? '⚠️' : 'ℹ️';
   }
 }
 

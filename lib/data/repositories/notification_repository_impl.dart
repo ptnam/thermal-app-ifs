@@ -54,6 +54,7 @@ class NotificationRepositoryImpl implements NotificationRepository {
       final machineId = queryParameters['machineId'] as int?;
       final areaId = queryParameters['areaId'] as int?;
       final fromTimeStr = queryParameters['fromTime'] as String?;
+      final compareType = queryParameters['compareType'] as String?;
 
       // Default: last 7 days if not specified
       final now = DateTime.now();
@@ -72,6 +73,7 @@ class NotificationRepositoryImpl implements NotificationRepository {
           : null;
 
       _logger.info('Notification status filter: ${notificationStatus?.toQueryParam() ?? 'none'}');
+      _logger.info('Compare type filter: ${compareType ?? 'none'}');
 
       final result = await _notificationApiService.getNotificationList(
         accessToken: token,
@@ -81,6 +83,7 @@ class NotificationRepositoryImpl implements NotificationRepository {
         notificationStatus: notificationStatus,
         machineId: machineId,
         areaId: areaId,
+        compareType: compareType,
       );
 
       return result.fold(
@@ -111,13 +114,22 @@ class NotificationRepositoryImpl implements NotificationRepository {
             );
           }
 
-          final items = response.data.map((dto) => _dtoToEntity(dto)).toList();
+          var items = response.data.map((dto) => _dtoToEntity(dto)).toList();
+          
+          // Client-side filter by compareType (API doesn't support this filter)
+          if (compareType != null && compareType.isNotEmpty) {
+            items = items.where((item) {
+              return item.compareTypeObject?.code == compareType;
+            }).toList();
+            _logger.info('After compareType filter: ${items.length} items (filter: $compareType)');
+          }
+          
           return Right(
             NotificationListEntity(
-              totalRow: response.totalRecords,
+              totalRow: compareType != null ? items.length : response.totalRecords,
               pageSize: response.pageSize,
               pageIndex: response.currentPage,
-              totalPages: response.totalPages,
+              totalPages: compareType != null ? 1 : response.totalPages,
               items: items,
             ),
           );

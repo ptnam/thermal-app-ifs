@@ -185,7 +185,7 @@ class _AIWarningFilterDialogState extends State<AIWarningFilterDialog> {
                       ),
                     ),
                   ),
-                  TextButton(onPressed: _onReset, child: const Text('Đặt lại')),
+                  TextButton(onPressed: _onReset, child: const Text('Đặt lại', style: TextStyle(color: AppColors.primaryDark),)),
                 ],
               ),
             ),
