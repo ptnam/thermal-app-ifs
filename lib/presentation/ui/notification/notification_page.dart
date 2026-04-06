@@ -303,9 +303,11 @@ class _NotificationPageState extends State<NotificationPage> {
                   indicatorColor: Colors.white,
                   indicatorWeight: 3,
                   labelColor: Colors.white,
-                  unselectedLabelColor: Colors.white.withOpacity(0.6),
+                  unselectedLabelColor: const Color(0xFF64B5F6).withOpacity(
+                    0.5,
+                  ),
                   labelStyle: const TextStyle(
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                     fontSize: 14,
                   ),
                   unselectedLabelStyle: const TextStyle(

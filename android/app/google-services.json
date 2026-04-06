@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "524070383945",
-    "project_id": "thermal-b13b9",
-    "storage_bucket": "thermal-b13b9.firebasestorage.app"
+    "project_number": "823669812203",
+    "project_id": "thermalmonitoring-eab3d",
+    "storage_bucket": "thermalmonitoring-eab3d.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:524070383945:android:f64c1c65c5f065a48eea98",
+        "mobilesdk_app_id": "1:823669812203:android:05f76f4a16589ccd3f87ae",
         "android_client_info": {
-          "package_name": "com.mtktech.thermal_app"
+          "package_name": "com.ifs.smartcamera"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyAXoS2Zo9hKWV7nvd52AFTEyB5hyugnwl4"
+          "current_key": "AIzaSyCcO7aeHrL5BALEmHoWRz5qeY-h61R_Bfs"
         }
       ],
       "services": {

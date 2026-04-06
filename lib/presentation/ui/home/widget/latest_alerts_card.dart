@@ -35,12 +35,23 @@ class _LatestAlertsCardState extends State<LatestAlertsCard> {
                 onTap: () => setState(() => _selectedTab = 0),
                 child: Text(
                   'Vượt ngưỡng',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    color: _selectedTab == 0
-                        ? Colors.white
-                        : Colors.white.withOpacity(0.5),
-                  ),
+                  style: (_selectedTab == 0
+                          ? Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            )
+                          : Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: const Color(0xFF64B5F6).withOpacity(0.5),
+                            )) ??
+                      TextStyle(
+                        fontSize: _selectedTab == 0 ? 22 : 16,
+                        fontWeight: _selectedTab == 0
+                            ? FontWeight.w700
+                            : FontWeight.w400,
+                        color: _selectedTab == 0
+                            ? Colors.white
+                            : const Color(0xFF64B5F6).withOpacity(0.5),
+                      ),
                 ),
               ),
               const SizedBox(width: 32),
@@ -48,11 +59,23 @@ class _LatestAlertsCardState extends State<LatestAlertsCard> {
                 onTap: () => setState(() => _selectedTab = 1),
                 child: Text(
                   'Cảnh báo AI',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: _selectedTab == 1
-                        ? const Color(0xFF64B5F6)
-                        : const Color(0xFF64B5F6).withOpacity(0.5),
-                  ),
+                  style: (_selectedTab == 1
+                          ? Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            )
+                          : Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: const Color(0xFF64B5F6).withOpacity(0.5),
+                            )) ??
+                      TextStyle(
+                        fontSize: _selectedTab == 1 ? 22 : 16,
+                        fontWeight: _selectedTab == 1
+                            ? FontWeight.w700
+                            : FontWeight.w400,
+                        color: _selectedTab == 1
+                            ? Colors.white
+                            : const Color(0xFF64B5F6).withOpacity(0.5),
+                      ),
                 ),
               ),
             ],

@@ -108,7 +108,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   user: user,
                   accessToken: tokens.accessToken,
                 );
-            debugPrint('✅ FCM token registered for user: ${user.userName}');
+            if (success) {
+              debugPrint('✅ FCM token registered for user: ${user.userName}');
+            } else {
+              debugPrint('❌ FCM token registration failed for user: ${user.userName}');
+            }
 
             // Show success notification
             // if (mounted && success) {
