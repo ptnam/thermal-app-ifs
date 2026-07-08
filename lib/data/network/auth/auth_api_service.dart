@@ -15,8 +15,8 @@ class AuthApiService {
     ApiClient apiClient,
     BaseUrlProvider baseUrlProvider, {
     AppLogger? logger,
-  })  : _apiClient = apiClient,
-        _baseUrlProvider = baseUrlProvider;
+  }) : _apiClient = apiClient,
+       _baseUrlProvider = baseUrlProvider;
 
   final ApiClient _apiClient;
   final BaseUrlProvider _baseUrlProvider;
@@ -51,7 +51,7 @@ class AuthApiService {
       request: (dio) => dio.post<Map<String, dynamic>>(
         _endpoints.refresh,
         data: request.toJson(),
-        options: _jsonOptions,
+        options: _jsonPatchOptions,
       ),
       mapper: (json) => AuthTokensDto.fromJson(json),
       errorMessageTransformer: _decodeHtmlEntities,
@@ -75,6 +75,13 @@ class AuthApiService {
     headers: const {
       'Accept': 'application/json',
       'Content-Type': 'application/json',
+    },
+  );
+
+  Options get _jsonPatchOptions => Options(
+    headers: const {
+      'Accept': '*/*',
+      'Content-Type': 'application/json-patch+json',
     },
   );
 

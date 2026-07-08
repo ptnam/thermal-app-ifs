@@ -94,9 +94,39 @@ class ApiClient {
   ) {
     final data = exception.response?.data;
     if (data is Map<String, dynamic>) {
+      final errors = data['errors'];
+      if (errors is Map<String, dynamic> && errors.isNotEmpty) {
+        final messages = <String>[];
+        for (final entry in errors.entries) {
+          final value = entry.value;
+          if (value is List) {
+            for (final item in value) {
+              if (item != null) {
+                messages.add(item.toString());
+              }
+            }
+          } else if (value != null) {
+            messages.add(value.toString());
+          }
+        }
+        if (messages.isNotEmpty) {
+          return _transformMessage(messages.join('\n'), transformer);
+        }
+      }
+
       final serverMessage = data['message'] as String?;
       if (serverMessage != null && serverMessage.isNotEmpty) {
         return _transformMessage(serverMessage, transformer);
+      }
+
+      final title = data['title'] as String?;
+      if (title != null && title.isNotEmpty) {
+        return _transformMessage(title, transformer);
+      }
+
+      final detail = data['detail'] as String?;
+      if (detail != null && detail.isNotEmpty) {
+        return _transformMessage(detail, transformer);
       }
     }
     return exception.message ?? 'Network error';

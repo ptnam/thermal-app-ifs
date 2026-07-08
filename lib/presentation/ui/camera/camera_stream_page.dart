@@ -27,15 +27,21 @@ class CameraStreamPage extends StatefulWidget {
 }
 
 class _CameraStreamPageState extends State<CameraStreamPage> {
+  // Native HLS init (ExoPlayer/AVPlayer) isn't covered by Dio's timeouts,
+  // so without this it can hang indefinitely on a slow/unresponsive stream.
+  static const _videoInitTimeout = Duration(seconds: 15);
+
   late CameraStreamBloc _cameraStreamBloc;
   late CameraControlBloc _cameraControlBloc;
   late AppConfig _appConfig;
   VideoPlayerController? _videoController;
+  String? _videoError;
   StreamSubscription<CameraControlState>? _cameraControlSubscription;
   bool _isSendingPtzCommand = false;
   int? _queuedPtzCommand;
   int? _queuedPtzSpeed;
   int? _queuedPtzPreCommand;
+  String? _lastStreamUrl;
 
   @override
   void initState() {
@@ -54,9 +60,14 @@ class _CameraStreamPageState extends State<CameraStreamPage> {
     final hlsUrl = '${_appConfig.streamUrl}$streamUrl';
     debugPrint('Initializing video with URL: $hlsUrl');
 
+    _lastStreamUrl = streamUrl;
+    final failedController = _videoController;
+    _videoController = null;
+    setState(() => _videoError = null);
+    await failedController?.dispose();
+
     try {
-      _videoController?.dispose();
-      _videoController = VideoPlayerController.networkUrl(
+      final controller = VideoPlayerController.networkUrl(
         Uri.parse(hlsUrl),
         videoPlayerOptions: VideoPlayerOptions(
           mixWithOthers: false,
@@ -70,21 +81,24 @@ class _CameraStreamPageState extends State<CameraStreamPage> {
         },
       );
 
-      await _videoController!.initialize();
+      await controller.initialize().timeout(_videoInitTimeout);
 
       if (mounted) {
-        setState(() {});
-        _videoController!.play();
+        setState(() => _videoController = controller);
+        controller.play();
+      } else {
+        await controller.dispose();
+      }
+    } on TimeoutException {
+      if (mounted) {
+        setState(() {
+          _videoError =
+              'Tải stream quá lâu, vui lòng kiểm tra kết nối và thử lại.';
+        });
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Lỗi tải video: ${e.toString()}'),
-            duration: const Duration(seconds: 3),
-            backgroundColor: Colors.red,
-          ),
-        );
+        setState(() => _videoError = 'Lỗi tải video: ${e.toString()}');
       }
     }
   }
@@ -169,16 +183,19 @@ class _CameraStreamPageState extends State<CameraStreamPage> {
           }
 
           if (state is CameraStreamLoaded) {
-            // Initialize video khi dữ liệu tải xong
+            final streamUrl =
+                state.cameraStream.streamUrl ?? state.cameraStream.cameraName;
+            // Initialize video khi dữ liệu tải xong (retry chỉ qua nút bấm,
+            // tránh vòng lặp gọi lại liên tục khi stream đang lỗi)
             WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (_videoController == null) {
-                _initializeVideo(
-                  state.cameraStream.streamUrl ?? state.cameraStream.cameraName,
-                );
+              if (_videoController == null &&
+                  _videoError == null &&
+                  _lastStreamUrl != streamUrl) {
+                _initializeVideo(streamUrl);
               }
             });
 
-            return _buildFullscreenVideo(context);
+            return _buildFullscreenVideo(context, streamUrl);
           }
 
           return const Center(
@@ -192,38 +209,67 @@ class _CameraStreamPageState extends State<CameraStreamPage> {
     );
   }
 
-  Widget _buildFullscreenVideo(BuildContext context) {
+  Widget _buildVideoArea(BuildContext context, String streamUrl) {
+    if (_videoError != null) {
+      return Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.error_outline, color: Colors.red[300], size: 40),
+            const SizedBox(height: 12),
+            Text(
+              _videoError!,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: Colors.grey[400]),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            FilledButton.icon(
+              onPressed: () => _initializeVideo(streamUrl),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Thử lại'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_videoController != null && _videoController!.value.isInitialized) {
+      return SizedBox.expand(
+        child: FittedBox(
+          fit: BoxFit.contain,
+          child: SizedBox(
+            width: _videoController!.value.size.width,
+            height: _videoController!.value.size.height,
+            child: VideoPlayer(_videoController!),
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'Đang tải video...',
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: Colors.grey[400]),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFullscreenVideo(BuildContext context, String streamUrl) {
     return Stack(
       children: [
-        Center(
-          child:
-              _videoController != null && _videoController!.value.isInitialized
-              ? SizedBox.expand(
-                  child: FittedBox(
-                    fit: BoxFit.contain,
-                    child: SizedBox(
-                      width: _videoController!.value.size.width,
-                      height: _videoController!.value.size.height,
-                      child: VideoPlayer(_videoController!),
-                    ),
-                  ),
-                )
-              : Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Đang tải video...',
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodyMedium?.copyWith(color: Colors.grey[400]),
-                    ),
-                  ],
-                ),
-        ),
+        Center(child: _buildVideoArea(context, streamUrl)),
         if (widget.isPtzCamera)
           PtzDpadController(
             initiallyVisible: false,

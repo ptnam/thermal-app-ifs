@@ -114,3 +114,50 @@ class AIWarningFilterParams {
     );
   }
 }
+
+/// Filter parameters for the Report screen's thermal chart
+class ReportFilterParams {
+  final DateTime? fromTime;
+  final DateTime? toTime;
+  final int? areaId;
+  final String? areaName;
+  final int? machineId;
+  final String? machineName;
+
+  const ReportFilterParams({
+    this.fromTime,
+    this.toTime,
+    this.areaId,
+    this.areaName,
+    this.machineId,
+    this.machineName,
+  });
+
+  ReportFilterParams copyWith({
+    DateTime? fromTime,
+    DateTime? toTime,
+    int? areaId,
+    String? areaName,
+    int? machineId,
+    String? machineName,
+    bool clearAreaId = false,
+    bool clearMachineId = false,
+  }) {
+    return ReportFilterParams(
+      fromTime: fromTime ?? this.fromTime,
+      toTime: toTime ?? this.toTime,
+      areaId: clearAreaId ? null : (areaId ?? this.areaId),
+      areaName: clearAreaId ? null : (areaName ?? this.areaName),
+      machineId: clearMachineId ? null : (machineId ?? this.machineId),
+      machineName: clearMachineId ? null : (machineName ?? this.machineName),
+    );
+  }
+
+  // Factory for default filter (2 days back, matching the report's default window)
+  factory ReportFilterParams.defaultFilter() {
+    return ReportFilterParams(
+      fromTime: DateTime.now().subtract(const Duration(days: 2)),
+      toTime: DateTime.now(),
+    );
+  }
+}

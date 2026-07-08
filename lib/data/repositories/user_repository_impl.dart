@@ -204,6 +204,53 @@ class UserRepositoryImpl implements IUserRepository {
   }
 
   @override
+  Future<Either<ApiError, UserEntity>> registerUser({
+    required String username,
+    required String password,
+    required String email,
+    required String name,
+  }) async {
+    try {
+      final token = await _getAccessToken();
+      final nameParts = name.trim().split(RegExp(r'\s+'));
+      final firstName = nameParts.isNotEmpty ? nameParts.first : name.trim();
+      final lastMiddleName = nameParts.length > 1
+          ? nameParts.sublist(1).join(' ')
+          : 'User';
+      final request = RegisterUserRequestDto(
+        username: username,
+        firstName: firstName,
+        lastMiddleName: lastMiddleName,
+        email: email,
+        phone: '',
+        password: password,
+      );
+      final result = await _userApiService.register(
+        request: request,
+        accessToken: token,
+      );
+
+      return result.fold(
+        onFailure: (error) => Left(error),
+        onSuccess: (response) {
+          if (response == null) {
+            return Left(const ApiError(message: 'Failed to register user'));
+          }
+          return Right(response.toEntity());
+        },
+      );
+    } catch (e, st) {
+      return Left(
+        ApiError(
+          message: 'Failed to register user: $e',
+          cause: e,
+          stackTrace: st,
+        ),
+      );
+    }
+  }
+
+  @override
   Future<Either<ApiError, UserEntity>> updateUser(
     int id,
     UserEntity user,

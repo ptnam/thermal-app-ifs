@@ -146,6 +146,22 @@ class UserApiService {
     );
   }
 
+  /// Register user with fixed manager role and active status.
+  Future<ApiResult<UserDto>> register({
+    required RegisterUserRequestDto request,
+    required String accessToken,
+  }) async {
+    _logger.info('Registering user: ${request.username}');
+    return _apiClient.send<UserDto>(
+      request: (dio) => dio.post<Map<String, dynamic>>(
+        _endpoints.create,
+        data: request.toJson(),
+        options: _authorizedOptions(accessToken),
+      ),
+      mapper: (json) => UserDto.fromJson(json),
+    );
+  }
+
   /// Update user by ID
   /// 
   /// [id] - User ID to update

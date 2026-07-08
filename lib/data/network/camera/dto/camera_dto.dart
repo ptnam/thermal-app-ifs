@@ -222,3 +222,53 @@ class FavouriteCameraRequest {
     };
   }
 }
+
+class CreateCameraRequestDto {
+  final String cameraType;
+  final String status;
+  final String code;
+  final int areaId;
+  final int frequency;
+  final String name;
+  final String cameraLink;
+  final String ptzType;
+  final String lanIpAddress;
+  final String wanIpAddress;
+  final String brand;
+  final String username;
+  final String password;
+
+  const CreateCameraRequestDto({
+    required this.cameraType,
+    required this.status,
+    required this.code,
+    required this.areaId,
+    required this.frequency,
+    required this.name,
+    required this.cameraLink,
+    required this.ptzType,
+    required this.lanIpAddress,
+    required this.wanIpAddress,
+    required this.brand,
+    required this.username,
+    required this.password,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'cameraType': cameraType,
+      'status': status,
+      'code': code,
+      'areaId': areaId,
+      'frequency': frequency,
+      'name': name,
+      'cameraLink': cameraLink,
+      'ptzType': ptzType,
+      'lanIpAddress': lanIpAddress,
+      'wanIpAddress': wanIpAddress,
+      'brand': brand,
+      'username': username,
+      'password': password,
+    };
+  }
+}

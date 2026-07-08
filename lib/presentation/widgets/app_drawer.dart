@@ -4,6 +4,7 @@ import 'package:thermal_mobile/core/constants/colors.dart';
 import 'package:thermal_mobile/core/constants/strings.dart';
 import 'package:thermal_mobile/di/injection.dart';
 import 'package:thermal_mobile/domain/repositories/auth_repository.dart';
+import 'package:thermal_mobile/presentation/ui/login/login_screen.dart';
 import 'package:thermal_mobile/main.dart' as app_main;
 import 'package:thermal_mobile/presentation/bloc/user/user_bloc.dart';
 import 'package:thermal_mobile/presentation/bloc/user/user_state.dart';
@@ -30,7 +31,7 @@ class AppDrawer extends StatelessWidget {
                     final user = state.currentUser;
                     final userName = user?.fullName ?? user?.userName ?? 'User';
                     final userRole =
-                        user?.roleName ?? user?.role?.name ?? 'Role';
+                        user?.roleName ?? user?.role?.name ?? 'Admin';
                     final avatarUrl = user?.avatarUrl;
 
                     return DrawerHeader(
@@ -59,30 +60,95 @@ class AppDrawer extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            userRole,
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.8),
-                              fontSize: 14,
+                          if (app_main.isIslgEnabled) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              userRole,
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.8),
+                                fontSize: 14,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                          ],
                         ],
                       ),
                     );
                   },
                 ),
-                ListTile(
-                  leading: const Icon(Icons.settings, color: Colors.white),
-                  title: const Text(
-                    'Cấu hình Server',
-                    style: TextStyle(color: Colors.white),
+                if (app_main.isIslgEnabled)
+                  ListTile(
+                    leading: const Icon(Icons.settings, color: Colors.white),
+                    title: const Text(
+                      'Cấu hình Server',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(context, '/config');
+                    },
                   ),
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.pushNamed(context, '/config');
+                BlocBuilder<UserBloc, UserState>(
+                  builder: (context, state) {
+                    final roleName =
+                        (state.currentUser?.roleName ??
+                                state.currentUser?.role?.name ??
+                                '')
+                            .toLowerCase();
+                    final hasManagerPermission =
+                        roleName == 'manager' || roleName == 'admin';
+
+                    return FutureBuilder<bool>(
+                      future: getIt<AuthRepository>().isUserLoginActive(),
+                      builder: (context, snapshot) {
+                        final isUserLoggedIn = snapshot.data ?? false;
+                        if (!isUserLoggedIn || !hasManagerPermission) {
+                          return const SizedBox.shrink();
+                        }
+
+                        return Column(
+                          children: [
+                            // ListTile(
+                            //   leading: const Icon(
+                            //     Icons.location_on,
+                            //     color: Colors.white,
+                            //   ),
+                            //   title: const Text(
+                            //     'Khu vực',
+                            //     style: TextStyle(color: Colors.white),
+                            //   ),
+                            //   onTap: () {
+                            //     Navigator.pop(context);
+                            //     Navigator.of(context).push(
+                            //       MaterialPageRoute(
+                            //         builder: (_) => const AreaManagerScreen(),
+                            //       ),
+                            //     );
+                            //   },
+                            // ),
+                            // ListTile(
+                            //   leading: const Icon(
+                            //     Icons.videocam,
+                            //     color: Colors.white,
+                            //   ),
+                            //   title: const Text(
+                            //     'Camera',
+                            //     style: TextStyle(color: Colors.white),
+                            //   ),
+                            //   onTap: () {
+                            //     Navigator.pop(context);
+                            //     Navigator.of(context).push(
+                            //       MaterialPageRoute(
+                            //         builder: (_) => const CameraManagerScreen(),
+                            //       ),
+                            //     );
+                            //   },
+                            // ),
+                          ],
+                        );
+                      },
+                    );
                   },
                 ),
                 // ListTile(
@@ -110,22 +176,44 @@ class AppDrawer extends StatelessWidget {
                     // Navigate to camera
                   },
                 ),
+                FutureBuilder<bool>(
+                  future: getIt<AuthRepository>().isUserLoginActive(),
+                  builder: (context, snapshot) {
+                    final isUserLoggedIn = snapshot.data ?? false;
+
+                    return Column(
+                      children: [
+                        ListTile(
+                          leading: Icon(
+                            isUserLoggedIn ? Icons.logout : Icons.login,
+                            color: isUserLoggedIn ? Colors.red : Colors.white,
+                          ),
+                          title: Text(
+                            isUserLoggedIn ? 'Đăng xuất' : 'Đăng nhập',
+                            style: TextStyle(
+                              color: isUserLoggedIn ? Colors.red : Colors.white,
+                            ),
+                          ),
+                          onTap: () {
+                            Navigator.pop(context);
+                            if (isUserLoggedIn) {
+                              _showLogoutDialog(context);
+                            } else {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => LoginScreen(
+                                    authRepository: getIt<AuthRepository>(),
+                                  ),
+                                ),
+                              );
+                            }
+                          },
+                        ),
+                      ],
+                    );
+                  },
+                ),
               ],
-            ),
-          ),
-          const Divider(color: Colors.white24, height: 1),
-          SafeArea(
-            top: false,
-            child: ListTile(
-              leading: const Icon(Icons.logout, color: Colors.red),
-              title: const Text(
-                'Đăng xuất',
-                style: TextStyle(color: Colors.red),
-              ),
-              onTap: () {
-                Navigator.pop(context);
-                _showLogoutDialog(context);
-              },
             ),
           ),
         ],
@@ -138,13 +226,19 @@ class AppDrawer extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppColors.backgroundDark,
-        title: const Text('Xác nhận đăng xuất', style: TextStyle(color: Colors.white)),
-        content: const Text('Bạn có chắc chắn muốn đăng xuất khỏi ứng dụng?', style: TextStyle(color: Colors.white)),
+        title: const Text(
+          'Xác nhận đăng xuất',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: const Text(
+          'Bạn có chắc chắn muốn đăng xuất khỏi ứng dụng?',
+          style: TextStyle(color: Colors.white),
+        ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Hủy', style: TextStyle(color: Colors.white),),
+            child: const Text('Hủy', style: TextStyle(color: Colors.white)),
           ),
           FilledButton(
             onPressed: () => _handleLogout(context),
@@ -175,26 +269,17 @@ class AppDrawer extends StatelessWidget {
     try {
       // Unregister FCM token first
       await app_main.messagingService.unregisterToken();
-      
+
       final authRepository = getIt<AuthRepository>();
       await authRepository.logout();
+      app_main.notifyAuthSessionChanged();
 
       if (context.mounted) {
         Navigator.pop(context); // Close loading dialog
       }
 
-      // Use global navigator to go to login
+      resetBlocInstances();
       app_main.navigateToLogin();
-
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Đã đăng xuất thành công'),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
     } catch (e) {
       if (context.mounted) {
         try {

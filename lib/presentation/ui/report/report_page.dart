@@ -3,14 +3,21 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:intl/intl.dart';
 import 'package:thermal_mobile/core/constants/icons.dart';
+import 'package:thermal_mobile/core/types/get_access_token.dart';
+import 'package:thermal_mobile/data/network/api/base_dto.dart';
+import 'package:thermal_mobile/data/network/area/area_api_service.dart';
+import 'package:thermal_mobile/data/network/machine/machine_api_service.dart';
 import 'package:thermal_mobile/data/network/thermal_data/dto/thermal_data_dto.dart';
 import 'package:thermal_mobile/di/injection.dart';
+import 'package:thermal_mobile/domain/models/machine_entity.dart';
 import 'package:thermal_mobile/presentation/bloc/machine/machine_settings_bloc.dart';
 import 'package:thermal_mobile/presentation/bloc/machine/machine_settings_event.dart';
 import 'package:thermal_mobile/presentation/bloc/machine/machine_settings_state.dart';
 import 'package:thermal_mobile/presentation/bloc/thermal_data/thermal_data_bloc.dart';
 import 'package:thermal_mobile/presentation/bloc/thermal_data/thermal_data_event.dart';
 import 'package:thermal_mobile/presentation/bloc/thermal_data/thermal_data_state.dart';
+import 'package:thermal_mobile/presentation/models/filter_params.dart';
+import 'package:thermal_mobile/presentation/report/dialogs/report_filter_dialog.dart';
 import 'package:thermal_mobile/presentation/widgets/app_drawer_service.dart';
 import 'package:thermal_mobile/presentation/widgets/thermal_line_chart.dart';
 import 'package:thermal_mobile/presentation/widgets/notification_count_chart.dart';
@@ -27,6 +34,9 @@ class ReportPageState extends State<ReportPage> {
   late final MachineSettingsBloc _machineSettingsBloc;
   late final ThermalDataBloc _thermalDataBloc;
   late final NotificationBloc _notificationBloc;
+
+  ReportFilterParams _reportFilter = ReportFilterParams.defaultFilter();
+  MachineSettingEntity? _lastSettings;
 
   @override
   void initState() {
@@ -52,6 +62,76 @@ class ReportPageState extends State<ReportPage> {
     super.dispose();
   }
 
+  Future<String> _getAccessToken() async {
+    final getAccessToken = getIt<GetAccessToken>();
+    return await getAccessToken();
+  }
+
+  Future<List<DropdownMenuItem<int>>> _getAreaItems() async {
+    final accessToken = await _getAccessToken();
+    final service = getIt<AreaApiService>();
+    final result = await service.getAllAreas(accessToken: accessToken);
+    final list = result.data ?? <ShortenBaseDto>[];
+    return list
+        .map((e) => DropdownMenuItem<int>(value: e.id, child: Text(e.name)))
+        .toList();
+  }
+
+  Future<List<DropdownMenuItem<int>>> _getMachineItems(int? areaId) async {
+    final accessToken = await _getAccessToken();
+    final service = getIt<MachineApiService>();
+    final result = await service.getAll(
+      accessToken: accessToken,
+      areaId: areaId,
+    );
+    final list = result.data ?? <ShortenBaseDto>[];
+    return list
+        .map((e) => DropdownMenuItem<int>(value: e.id, child: Text(e.name)))
+        .toList();
+  }
+
+  void _applyReportFilter(ReportFilterParams filter) {
+    final settings = _lastSettings;
+    if (settings == null) return;
+
+    final dateFormat = DateFormat('yyyy-MM-dd');
+    final dateTimeFormat = DateFormat('yyyy-MM-dd HH:mm:ss');
+    final fromTime =
+        filter.fromTime ?? DateTime.now().subtract(const Duration(days: 2));
+    final toTime = filter.toTime ?? DateTime.now();
+
+    _thermalDataBloc.add(
+      LoadDetailThermalDataMultiEvent(
+        areaId: filter.areaId ?? settings.areaId ?? 0,
+        machineIds: filter.machineId != null
+            ? [filter.machineId!]
+            : (settings.machineIds ?? []),
+        machineComponentIds: settings.machineComponentIds ?? [],
+        reportDate: dateFormat.format(toTime),
+        startDate: dateTimeFormat.format(fromTime),
+        endDate: dateTimeFormat.format(toTime),
+        userId: settings.userId ?? 0,
+      ),
+    );
+  }
+
+  Future<void> _onFilterTap(BuildContext context) async {
+    final areaItems = await _getAreaItems();
+    final machineItems = await _getMachineItems(_reportFilter.areaId);
+    if (!context.mounted) return;
+    final result = await ReportFilterDialog.show(
+      context: context,
+      initialParams: _reportFilter,
+      areaItems: areaItems,
+      machineItems: machineItems,
+      onAreaChanged: _getMachineItems,
+    );
+    if (result != null) {
+      setState(() => _reportFilter = result);
+      _applyReportFilter(result);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
@@ -66,6 +146,8 @@ class ReportPageState extends State<ReportPage> {
           if (settingsState.status == MachineSettingsStatus.success &&
               settingsState.settings != null) {
             final settings = settingsState.settings!;
+            _lastSettings = settings;
+            _reportFilter = _reportFilter.copyWith(areaId: settings.areaId);
             final now = DateTime.now();
             final twoDaysAgo = now.subtract(const Duration(days: 2));
 
@@ -186,6 +268,7 @@ class ReportPageState extends State<ReportPage> {
                                   .toList(),
                               showGrid: true,
                               showLegend: true,
+                              onFilterTap: () => _onFilterTap(context),
                             ),
                             const SizedBox(height: 24),
                             BlocBuilder<NotificationBloc, NotificationState>(

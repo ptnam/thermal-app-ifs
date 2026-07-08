@@ -362,6 +362,46 @@ class NotificationCard extends StatelessWidget {
                     ),
                   ),
 
+                // Comparison target (Đối tượng so sánh) if exists
+                if (item.compareComponent != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E293B),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: const Color(0xFF334155)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.compare,
+                            size: 14,
+                            color: Color(0xFF60A5FA),
+                          ),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              item.compareComponent ?? '',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
                 // Location Row
                 Row(
                   children: [
@@ -590,7 +630,7 @@ class NotificationDetailPage extends StatelessWidget {
                               ),
                               _buildDetailRow(
                                 icon: Icons.settings,
-                                label: 'Thành phần',
+                                label: 'Bộ phận',
                                 value: item.machineComponentName ?? 'N/A',
                               ),
                               _buildDetailRow(
@@ -623,8 +663,14 @@ class NotificationDetailPage extends StatelessWidget {
                                 if (item.compareValue != null)
                                   _buildDetailRow(
                                     icon: Icons.compare_arrows,
-                                    label: 'Nhiệt độ so sánh',
+                                    label: 'Giá trị so sánh',
                                     value: '${item.compareValue?.toStringAsFixed(1)}°C',
+                                  ),
+                                if (item.compareComponent != null)
+                                  _buildDetailRow(
+                                    icon: Icons.compare,
+                                    label: 'Đối tượng so sánh',
+                                    value: item.compareComponent ?? 'N/A',
                                   ),
                                 if (item.deltaValue != null)
                                   _buildDetailRow(

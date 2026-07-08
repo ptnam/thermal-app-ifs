@@ -19,6 +19,7 @@ class ThermalLineChart extends StatefulWidget {
   final String? title;
   final bool showGrid;
   final bool showLegend;
+  final VoidCallback? onFilterTap;
 
   const ThermalLineChart({
     super.key,
@@ -27,6 +28,7 @@ class ThermalLineChart extends StatefulWidget {
     this.title,
     this.showGrid = false,
     this.showLegend = false,
+    this.onFilterTap,
   });
 
   @override
@@ -103,10 +105,8 @@ class _ThermalLineChartState extends State<ThermalLineChart> {
                 ],
               ),
               IconButton(
-                icon: const Icon(Icons.more_vert, color: Colors.white),
-                onPressed: () {
-                  // Handle more options
-                },
+                icon: const Icon(Icons.filter_list, color: Colors.white),
+                onPressed: widget.onFilterTap,
               ),
             ],
           ),

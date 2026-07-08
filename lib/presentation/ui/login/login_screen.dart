@@ -63,13 +63,16 @@ class _LoginScreenState extends State<LoginScreen> {
         password: _passwordController.text,
       );
 
+      app_main.notifyAuthSessionChanged();
+
       // Register FCM token after successful login
       await _registerFcmToken();
 
       if (!mounted) return;
-      Navigator.of(
-        context,
-      ).pushReplacement(MaterialPageRoute(builder: (_) => const MainShell()));
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const MainShell()),
+        (route) => false,
+      );
     } catch (e) {
       if (!mounted) return;
       final userMessage = ErrorMapper.mapErrorToUserMessage(e);
@@ -140,24 +143,29 @@ class _LoginScreenState extends State<LoginScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            Align(
-              alignment: Alignment.topRight,
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: IconButton(
-                  icon: const Icon(Icons.settings, color: Colors.white),
-                  tooltip: 'Cấu hình',
-                  onPressed: () {
-                    Navigator.of(context).pushNamed(AppRoutes.config);
-                  },
+            if (!app_main.isFirestoreAutoLoginMode)
+              Align(
+                alignment: Alignment.topRight,
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: IconButton(
+                    icon: const Icon(Icons.settings, color: Colors.white),
+                    tooltip: 'Cấu hình',
+                    onPressed: () {
+                      Navigator.of(context).pushNamed(AppRoutes.config);
+                    },
+                  ),
                 ),
               ),
-            ),
             Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                mainAxisSize: MainAxisSize.max,
-                children: [
+              child: LayoutBuilder(
+                builder: (context, constraints) => SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      mainAxisSize: MainAxisSize.max,
+                      children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -399,7 +407,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ],
                   ),
-                ],
+                    ],
+                  ),
+                  ),
+                ),
               ),
             ),
           ],

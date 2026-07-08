@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/svg.dart';
@@ -713,6 +715,16 @@ class CameraTile extends StatefulWidget {
 
 class _CameraTileState extends State<CameraTile>
     with WidgetsBindingObserver, RouteAware {
+  // Native HLS init (ExoPlayer/AVPlayer) isn't covered by Dio's timeouts,
+  // so without this it can hang indefinitely on a slow/unresponsive stream.
+  static const _videoInitTimeout = Duration(seconds: 15);
+
+  // Many camera/NVR HLS gateways spin up a fresh transcode session per
+  // connection, so a full dispose+reinit costs several seconds. Grace period
+  // avoids tearing the player down for brief scroll-past dips below the
+  // visibility threshold, so scrolling doesn't repeatedly pay that cost.
+  static const _disposeGracePeriod = Duration(seconds: 3);
+
   late CameraStreamBloc _cameraStreamBloc;
   late AppConfig _appConfig;
   VideoPlayerController? _videoController;
@@ -722,6 +734,7 @@ class _CameraTileState extends State<CameraTile>
   bool _isActive = true; // Track if tile should be active
   String? _pendingStreamUrl; // Store stream URL until visible
   bool _isDisposed = false; // Track if widget is disposed
+  Timer? _pendingDisposeTimer;
 
   @override
   void initState() {
@@ -738,6 +751,8 @@ class _CameraTileState extends State<CameraTile>
     super.didChangeAppLifecycleState(state);
     if (state == AppLifecycleState.paused) {
       // App in background, dispose video
+      _pendingDisposeTimer?.cancel();
+      _pendingDisposeTimer = null;
       _disposeVideo();
     } else if (state == AppLifecycleState.resumed && _isVisible && _isActive) {
       // App resumed, reinitialize if we have stream URL
@@ -757,6 +772,10 @@ class _CameraTileState extends State<CameraTile>
     if (visiblePercentage > 20) {
       if (!_isVisible) {
         _isVisible = true;
+        // Cancel any pending teardown - the tile came back before the grace
+        // period elapsed, so the still-buffered player can just resume.
+        _pendingDisposeTimer?.cancel();
+        _pendingDisposeTimer = null;
         // Initialize video only when visible
         if (_isActive &&
             _pendingStreamUrl != null &&
@@ -770,8 +789,15 @@ class _CameraTileState extends State<CameraTile>
     } else {
       if (_isVisible) {
         _isVisible = false;
-        // Dispose video completely when not visible to free resources
-        _disposeVideo();
+        // Pause immediately, but delay the full dispose+reinit teardown in
+        // case this is just a brief scroll-past rather than navigating away.
+        _videoController?.pause();
+        _pendingDisposeTimer?.cancel();
+        _pendingDisposeTimer = Timer(_disposeGracePeriod, () {
+          if (!_isDisposed && !_isVisible) {
+            _disposeVideo();
+          }
+        });
       }
     }
   }
@@ -840,7 +866,7 @@ class _CameraTileState extends State<CameraTile>
         },
       );
 
-      await _videoController!.initialize();
+      await _videoController!.initialize().timeout(_videoInitTimeout);
 
       if (mounted && _isVisible && _isActive) {
         setState(() {
@@ -854,6 +880,10 @@ class _CameraTileState extends State<CameraTile>
         _disposeVideo();
       }
     } catch (e) {
+      // Covers TimeoutException (stream hung / unresponsive) and any other
+      // init failure; the tile's error UI lets the user retry manually.
+      _pendingStreamUrl = streamUrl;
+      _disposeVideo();
       if (mounted) {
         setState(() {
           _hasError = true;
@@ -866,7 +896,10 @@ class _CameraTileState extends State<CameraTile>
     setState(() {
       _isActive = false;
     });
-    // Dispose instead of just pause
+    // Navigating away for real - dispose right away instead of waiting out
+    // the scroll-past grace period.
+    _pendingDisposeTimer?.cancel();
+    _pendingDisposeTimer = null;
     _disposeVideo();
   }
 
@@ -886,6 +919,7 @@ class _CameraTileState extends State<CameraTile>
   @override
   void dispose() {
     _isDisposed = true;
+    _pendingDisposeTimer?.cancel();
     CameraScreenController().unregisterTile(this);
     WidgetsBinding.instance.removeObserver(this);
 
@@ -1031,6 +1065,21 @@ class _CameraTileState extends State<CameraTile>
               Text(
                 'Lỗi tải video',
                 style: TextStyle(color: Colors.grey[400], fontSize: 12),
+              ),
+              const SizedBox(height: 8),
+              TextButton.icon(
+                onPressed: () {
+                  setState(() => _hasError = false);
+                  if (_pendingStreamUrl != null) {
+                    _initializeVideo(_pendingStreamUrl!);
+                  } else {
+                    _cameraStreamBloc.add(
+                      FetchCameraStreamEvent(cameraId: widget.camera.id),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.refresh, size: 16),
+                label: const Text('Thử lại', style: TextStyle(fontSize: 12)),
               ),
             ],
           ),

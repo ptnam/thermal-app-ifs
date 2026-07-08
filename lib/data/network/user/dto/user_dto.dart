@@ -213,3 +213,49 @@ class ChangePasswordRequestDto {
     };
   }
 }
+
+class RegisterUserRequestDto {
+  final String username;
+  final String firstName;
+  final String lastMiddleName;
+  final String email;
+  final String phone;
+  final String password;
+
+  const RegisterUserRequestDto({
+    required this.username,
+    required this.firstName,
+    required this.lastMiddleName,
+    required this.email,
+    required this.phone,
+    required this.password,
+  });
+
+  Map<String, dynamic> toJson() {
+    final userPayload = {
+      'id': 0,
+      'userName': username,
+      'username': username,
+      'fullName': '$firstName $lastMiddleName'.trim(),
+      'firstName': firstName,
+      'lastMiddleName': lastMiddleName,
+      'email': email,
+      'phone': phone,
+      'password': password,
+      'status': 'Active',
+      'roleId': 1,
+      'roles': const [
+        {'code': 'admin', 'name': 'Admin', 'id': 1},
+      ],
+    };
+
+    return {
+      // Backend validation expects these fields in some deployments.
+      'id': 0,
+      'user': userPayload,
+
+      // Keep flattened fields for backward compatibility with existing endpoint shape.
+      ...userPayload,
+    };
+  }
+}

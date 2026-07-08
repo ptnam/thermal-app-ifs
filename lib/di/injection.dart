@@ -6,6 +6,7 @@ import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:thermal_mobile/core/configs/app_config.dart';
 import 'package:thermal_mobile/core/logger/app_logger.dart';
+import 'package:thermal_mobile/core/services/firestore_service.dart';
 import 'package:thermal_mobile/core/types/get_access_token.dart';
 import 'package:thermal_mobile/data/local/storage/config_storage.dart';
 import 'package:thermal_mobile/data/network/api/api_client.dart';
@@ -168,6 +169,8 @@ Future<void> configureDependencies() async {
     ),
   );
 
+  getIt.registerLazySingleton<FirestoreService>(() => FirestoreService());
+
   _registerNetworkLayer();
   _registerLocalLayer();
   _registerRepositories();
@@ -179,8 +182,7 @@ Future<void> configureDependencies() async {
     getIt.registerLazySingleton<GetAccessToken>(
       () => () async {
         final authRepo = getIt<AuthRepository>();
-        final tokens = await authRepo.read();
-        return tokens?.accessToken ?? '';
+        return authRepo.getAccessToken();
       },
     );
   }
@@ -396,8 +398,7 @@ void _registerRepositories() {
   // Helper function to get access token from AuthRepository
   Future<String> getAccessToken() async {
     final authRepo = getIt<AuthRepository>();
-    final tokens = await authRepo.read();
-    return tokens?.accessToken ?? '';
+    return authRepo.getAccessToken();
   }
 
   // Area Repository

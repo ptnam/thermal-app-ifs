@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:thermal_mobile/core/constants/colors.dart';
+import 'package:thermal_mobile/presentation/ui/login/login_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../di/injection.dart';
@@ -40,16 +41,40 @@ class SettingPage extends StatelessWidget {
                 ),
               ),
             ),
-            _SettingCard(
-              children: [
-                _SettingTile(
-                  icon: Icons.logout_rounded,
-                  title: 'Đăng xuất',
-                  subtitle: 'Thoát khỏi tài khoản của bạn',
-                  color: Colors.red.shade500,
-                  onTap: () => _showLogoutDialog(context),
-                ),
-              ],
+            FutureBuilder<bool>(
+              future: getIt<AuthRepository>().isUserLoginActive(),
+              builder: (context, snapshot) {
+                final isUserLoggedIn = snapshot.data ?? false;
+                return _SettingCard(
+                  children: [
+                    _SettingTile(
+                      icon: isUserLoggedIn
+                          ? Icons.logout_rounded
+                          : Icons.login_rounded,
+                      title: isUserLoggedIn ? 'Đăng xuất' : 'Đăng nhập',
+                      subtitle: isUserLoggedIn
+                          ? 'Thoát khỏi tài khoản của bạn'
+                          : 'Đăng nhập bằng tài khoản cá nhân',
+                      color: isUserLoggedIn
+                          ? Colors.red.shade500
+                          : Colors.green.shade500,
+                      onTap: () {
+                        if (isUserLoggedIn) {
+                          _showLogoutDialog(context);
+                        } else {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => LoginScreen(
+                                authRepository: getIt<AuthRepository>(),
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ],
+                );
+              },
             ),
 
             // Security Section
@@ -169,7 +194,7 @@ class SettingPage extends StatelessWidget {
   }
 
   void _showPrivacyPolicy(BuildContext context) async {
-    const url = 'https://sites.google.com/view/camera-vision/privacy-policy';
+    const url = 'https://sites.google.com/view/ifs-aisoft/privacy-policy';
     await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
   }
 
@@ -187,26 +212,17 @@ class SettingPage extends StatelessWidget {
     try {
       // Unregister FCM token first
       await app_main.messagingService.unregisterToken();
-      
+
       final authRepository = getIt<AuthRepository>();
       await authRepository.logout();
+      app_main.notifyAuthSessionChanged();
 
       if (context.mounted) {
         Navigator.pop(context); // Close loading dialog
       }
 
-      // Use global navigator to go to login
+      resetBlocInstances();
       app_main.navigateToLogin();
-
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Đã đăng xuất thành công'),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
     } catch (e) {
       if (context.mounted) {
         try {

@@ -286,22 +286,28 @@ class FirebaseMessagingService {
   }
 
   /// Handle foreground message - show local notification
+  ///
+  /// FCM messages can arrive as a "notification" message (has `message.notification`)
+  /// or as a data-only message (only `message.data`). Data-only messages are never
+  /// auto-displayed by the OS, so when the app is open we must always fall back to
+  /// building the alert text from `message.data` — otherwise data-only pushes are
+  /// silently dropped while the app is in the foreground.
   Future<void> _handleForegroundMessage(RemoteMessage message) async {
     debugPrint('📩 Received foreground message: ${message.messageId}');
     debugPrint('📩 Title: ${message.notification?.title}');
     debugPrint('📩 Body: ${message.notification?.body}');
     debugPrint('📩 Data: ${message.data}');
 
-    final notification = message.notification;
-    final android = message.notification?.android;
+    final title = message.notification?.title ?? message.data['title'] as String?;
+    final body = message.notification?.body ?? message.data['body'] as String?;
 
-    // Show local notification on Android
-    if (notification != null && !kIsWeb) {
+    // Show local notification while app is in foreground
+    if (!kIsWeb && (title != null || body != null)) {
       debugPrint('🔔 Showing local notification...');
       await _localNotifications.show(
-        notification.hashCode,
-        notification.title,
-        notification.body,
+        message.hashCode,
+        title,
+        body,
         NotificationDetails(
           android: AndroidNotificationDetails(
             _channel.id,
@@ -323,7 +329,9 @@ class FirebaseMessagingService {
       );
       debugPrint('✅ Local notification shown');
     } else {
-      debugPrint('⚠️ No notification to show (notification: $notification, kIsWeb: $kIsWeb)');
+      debugPrint(
+        '⚠️ No notification to show (title: $title, body: $body, kIsWeb: $kIsWeb)',
+      );
     }
   }
 

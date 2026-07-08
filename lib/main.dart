@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:thermal_mobile/core/constants/themes.dart';
 import 'package:thermal_mobile/core/services/firebase_messaging_service.dart';
+import 'package:thermal_mobile/core/services/session_expiration_service.dart';
 import 'package:thermal_mobile/data/network/user/user_token_api_service.dart';
 import 'package:thermal_mobile/firebase_options.dart';
 import 'package:thermal_mobile/presentation/bloc/user/user_bloc.dart';
@@ -18,6 +19,15 @@ late GlobalKey<NavigatorState> _navigatorKey;
 /// Global FirebaseMessagingService instance
 late FirebaseMessagingService messagingService;
 
+/// Server config entry points are visible in the normal manual-login flow.
+bool isFirestoreAutoLoginMode = false;
+
+/// Manual-login mode is always enabled now.
+bool isIslgEnabled = true;
+
+/// Increments whenever active auth context changes.
+final ValueNotifier<int> authSessionVersion = ValueNotifier<int>(0);
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -29,8 +39,13 @@ Future<void> main() async {
       );
     }
   } catch (e) {
-    // Firebase already initialized (can happen on hot restart)
-    debugPrint('Firebase init error (likely already initialized): $e');
+    // Benign on iOS: FirebaseAppDelegateProxyEnabled auto-configures the
+    // "[DEFAULT]" app natively before this Dart check runs (and again on
+    // hot restart), so Firebase.apps can read empty right before this call
+    // throws duplicate-app. Not a real failure - safe to ignore.
+    debugPrint(
+      'ℹ️ Firebase already initialized natively, skipping duplicate init: $e',
+    );
   }
 
   // Setup background message handler
@@ -59,12 +74,18 @@ Future<void> main() async {
     // Token is automatically sent to server when user is logged in
   };
 
-  // Decide initial screen based on cached session
   final authRepo = getIt<AuthRepository>();
-  final hasSession = await authRepo.hasValidSession();
+  final initialLoggedIn = await authRepo.hasValidSession();
 
   _navigatorKey = GlobalKey<NavigatorState>();
-  runApp(MyApp(initialLoggedIn: hasSession, navigatorKey: _navigatorKey));
+  sessionExpiredVersion.addListener(_handleSessionExpired);
+  runApp(MyApp(initialLoggedIn: initialLoggedIn, navigatorKey: _navigatorKey));
+}
+
+void _handleSessionExpired() {
+  resetBlocInstances();
+  notifyAuthSessionChanged();
+  navigateToLogin();
 }
 
 class MyApp extends StatelessWidget {
@@ -107,4 +128,8 @@ void navigateToLogin() {
     ),
     (route) => false,
   );
+}
+
+void notifyAuthSessionChanged() {
+  authSessionVersion.value = authSessionVersion.value + 1;
 }

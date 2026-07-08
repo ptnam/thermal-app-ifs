@@ -1,5 +1,3 @@
-
-
 import 'package:thermal_mobile/domain/models/auth_tokens.dart';
 
 abstract class AuthRepository {
@@ -11,9 +9,14 @@ abstract class AuthRepository {
 
   Future<bool> hasValidSession();
 
+  Future<String> getAccessToken();
+
   /// Perform login against remote and persist tokens locally
   Future<void> login({required String username, required String password});
 
   /// Perform logout (remote best-effort) and clear local cache
   Future<void> logout();
+
+  /// True when the user has a valid saved login session.
+  Future<bool> isUserLoginActive();
 }

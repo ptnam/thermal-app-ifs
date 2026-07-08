@@ -194,6 +194,35 @@ class AreaApiService {
     );
   }
 
+  /// Create area with multipart payload for manager screen.
+  Future<ApiResult<AreaDto>> createAreaManager({
+    required String mapType,
+    required String code,
+    required String name,
+    int? parentId,
+    required String accessToken,
+  }) async {
+    _logger.info('Creating manager area: $name');
+    final formData = FormData.fromMap({
+      'mapType': mapType,
+      'status': 'Active',
+      'code': code,
+      'name': name,
+      if (parentId != null) 'parentId': parentId,
+      'emapFile': 'null',
+    });
+
+    return _apiClient.send<AreaDto>(
+      request: (dio) => dio.post<Map<String, dynamic>>(
+        _endpoints.create,
+        data: formData,
+        options: _authorizedMultipartOptions(accessToken),
+      ),
+      mapper: (json) => AreaDto.fromJson(_castToStringDynamic(json)),
+      errorMessageTransformer: _decodeHtmlEntities,
+    );
+  }
+
   /// Update area by ID
   Future<ApiResult<AreaDto>> updateArea({
     required int id,
@@ -238,6 +267,15 @@ class AreaApiService {
     return _jsonOptions.copyWith(
       headers: {
         ...?_jsonOptions.headers,
+        'Authorization': 'Bearer $accessToken',
+      },
+    );
+  }
+
+  Options _authorizedMultipartOptions(String accessToken) {
+    return Options(
+      headers: {
+        'Accept': 'application/json',
         'Authorization': 'Bearer $accessToken',
       },
     );

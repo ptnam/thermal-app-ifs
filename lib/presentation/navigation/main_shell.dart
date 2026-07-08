@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:thermal_mobile/main.dart' as app_main;
 import 'package:thermal_mobile/presentation/navigation/bottom_navigation.dart';
 import 'package:thermal_mobile/presentation/ui/camera/camera_page.dart';
-import 'package:thermal_mobile/presentation/ui/chart/chart_page.dart';
 import 'package:thermal_mobile/presentation/ui/home/home_page.dart';
 import 'package:thermal_mobile/presentation/ui/notification/notification_page.dart';
 import 'package:thermal_mobile/presentation/ui/report/report_page.dart';
@@ -17,20 +17,43 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> {
   int _index = 0;
+  int _authVersion = 0;
+  late final GlobalKey<ScaffoldState> _scaffoldKey;
 
-  final _pages = [
-    const HomePage(),
-    const CameraPage(),
-    // const ChartPage(),
-    const NotificationPage(),
-    const ReportPage(),
-    // const SettingPage(),
+  @override
+  void initState() {
+    super.initState();
+    _scaffoldKey = AppDrawerService.createAndBindScaffoldKey();
+    _authVersion = app_main.authSessionVersion.value;
+    app_main.authSessionVersion.addListener(_onAuthSessionChanged);
+  }
+
+  @override
+  void dispose() {
+    app_main.authSessionVersion.removeListener(_onAuthSessionChanged);
+    AppDrawerService.unbindScaffoldKey(_scaffoldKey);
+    super.dispose();
+  }
+
+  void _onAuthSessionChanged() {
+    if (!mounted) return;
+    setState(() {
+      _authVersion = app_main.authSessionVersion.value;
+      _index = 0;
+    });
+  }
+
+  List<Widget> get _pages => [
+    HomePage(key: ValueKey('home_$_authVersion')),
+    CameraPage(key: ValueKey('camera_$_authVersion')),
+    NotificationPage(key: ValueKey('notification_$_authVersion')),
+    ReportPage(key: ValueKey('report_$_authVersion')),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      key: AppDrawerService.scaffoldKey,
+      key: _scaffoldKey,
       drawer: const AppDrawer(),
       body: Stack(
         children: [

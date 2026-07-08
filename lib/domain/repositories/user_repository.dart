@@ -41,6 +41,14 @@ abstract class IUserRepository {
   /// Create new user (admin)
   Future<Either<ApiError, UserEntity>> createUser(UserEntity user, String password);
 
+  /// Register new user from app registration screen.
+  Future<Either<ApiError, UserEntity>> registerUser({
+    required String username,
+    required String password,
+    required String email,
+    required String name,
+  });
+
   /// Update user
   Future<Either<ApiError, UserEntity>> updateUser(int id, UserEntity user);
 

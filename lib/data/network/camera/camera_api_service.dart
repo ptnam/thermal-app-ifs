@@ -177,6 +177,22 @@ class CameraApiService {
     );
   }
 
+  /// Create camera using manager payload shape.
+  Future<ApiResult<CameraDto>> createManagerCamera({
+    required CreateCameraRequestDto request,
+    required String accessToken,
+  }) async {
+    _logger.info('Creating manager camera: ${request.name}');
+    return _apiClient.send<CameraDto>(
+      request: (dio) => dio.post<Map<String, dynamic>>(
+        _cameraEndpoints.create,
+        data: request.toJson(),
+        options: _authorizedOptions(accessToken),
+      ),
+      mapper: (json) => CameraDto.fromJson(json),
+    );
+  }
+
   /// Update camera by ID
   Future<ApiResult<CameraDto>> update({
     required int id,
