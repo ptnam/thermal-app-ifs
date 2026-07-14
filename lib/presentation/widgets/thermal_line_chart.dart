@@ -21,6 +21,10 @@ class ThermalLineChart extends StatefulWidget {
   final bool showLegend;
   final VoidCallback? onFilterTap;
 
+  /// Current aggregation mode: 1 = Max, 2 = Min, 3 = Avg
+  final int dataMode;
+  final ValueChanged<int>? onDataModeChanged;
+
   const ThermalLineChart({
     super.key,
     required this.categories,
@@ -29,6 +33,8 @@ class ThermalLineChart extends StatefulWidget {
     this.showGrid = false,
     this.showLegend = false,
     this.onFilterTap,
+    this.dataMode = 1,
+    this.onDataModeChanged,
   });
 
   @override
@@ -104,9 +110,16 @@ class _ThermalLineChartState extends State<ThermalLineChart> {
                   ),
                 ],
               ),
-              IconButton(
-                icon: const Icon(Icons.filter_list, color: Colors.white),
-                onPressed: widget.onFilterTap,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildDataModeButton(),
+                  IconButton(
+                    icon: const Icon(Icons.filter_list, color: Colors.white),
+                    onPressed: widget.onFilterTap,
+                  ),
+                  const SizedBox(width: 8),
+                ],
               ),
             ],
           ),
@@ -279,6 +292,57 @@ class _ThermalLineChartState extends State<ThermalLineChart> {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  static const Map<int, String> _dataModeLabels = {1: 'Max', 2: 'Min', 3: 'Avg'};
+
+  Widget _buildDataModeButton() {
+    return PopupMenuButton<int>(
+      initialValue: widget.dataMode,
+      onSelected: widget.onDataModeChanged,
+      color: const Color(0xFF1A2332),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(color: Colors.white.withOpacity(0.1)),
+      ),
+      itemBuilder: (context) => _dataModeLabels.entries
+          .map(
+            (entry) => PopupMenuItem<int>(
+              value: entry.key,
+              child: Text(
+                entry.value,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: entry.key == widget.dataMode
+                      ? FontWeight.bold
+                      : FontWeight.normal,
+                ),
+              ),
+            ),
+          )
+          .toList(),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.white.withOpacity(0.3)),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              _dataModeLabels[widget.dataMode] ?? 'Max',
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+            const Icon(Icons.arrow_drop_down, color: Colors.white, size: 18),
+          ],
+        ),
       ),
     );
   }

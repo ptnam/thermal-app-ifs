@@ -119,6 +119,7 @@ class AreaRepositoryImpl implements AreaRepository {
       code: dto.code,
       id: dto.id,
       mapType: dto.mapType,
+      mapTypeId: dto.mapTypeObject?.id,
       photoPath: dto.photoPath,
       longitude: dto.longitude,
       latitude: dto.latitude,
@@ -136,6 +137,12 @@ class AreaRepositoryImpl implements AreaRepository {
       deletedAt: dto.deletedAt != null
           ? DateTime.tryParse(dto.deletedAt!)
           : null,
+      totalWarnings: dto.totalWarnings,
+      thresholdTemperature: dto.thresholdTemperature,
+      environmentTemperature: dto.environmentTemperature,
+      comparationDataMode: dto.comparationDataMode,
+      provinceId: dto.provinceId,
+      emapPhotoPath: dto.emapPhotoPath,
     );
   }
 
@@ -158,6 +165,7 @@ class AreaRepositoryImpl implements AreaRepository {
       thumbnailUrl: dto.thumbnailUrl,
       createdAt: dto.createdAt,
       updatedAt: dto.updatedAt,
+      isPined: dto.isPined,
     );
   }
 

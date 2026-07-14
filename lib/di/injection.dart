@@ -20,6 +20,7 @@ import 'package:thermal_mobile/data/network/machine/machine_api_service.dart';
 import 'package:thermal_mobile/data/network/notification/notification_api_service.dart';
 import 'package:thermal_mobile/data/network/role/role_api_service.dart';
 import 'package:thermal_mobile/data/network/thermal_data/thermal_data_api_service.dart';
+import 'package:thermal_mobile/data/network/thermal_data/thermal_data_hub_service.dart';
 import 'package:thermal_mobile/data/network/user/user_api_service.dart';
 import 'package:thermal_mobile/data/network/user/user_token_api_service.dart';
 import 'package:thermal_mobile/data/network/vision_notification/vision_notification_api_service.dart';
@@ -218,7 +219,7 @@ void _registerNetworkLayer() {
           client.badCertificateCallback =
               (X509Certificate cert, String host, int port) {
                 // Allow the internal domain or allow in debug mode
-                return host == 'thermal.infosysvietnam.com.vn' || kDebugMode;
+                return host == 'thermal.infosysvietnam.vn' || kDebugMode;
               };
           return client;
         };
@@ -348,6 +349,15 @@ void _registerNetworkLayer() {
     () => ThermalDataApiService(
       getIt<ApiClient>(),
       getIt<BaseUrlProvider>(),
+      logger: logger,
+    ),
+  );
+
+  // Thermal Data realtime (SignalR) service
+  getIt.registerLazySingleton<ThermalDataHubService>(
+    () => ThermalDataHubService(
+      getIt<BaseUrlProvider>(),
+      getIt<GetAccessToken>(),
       logger: logger,
     ),
   );

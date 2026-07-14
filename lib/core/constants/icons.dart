@@ -4,6 +4,7 @@ class AppIcons {
 
   static get icHome => 'assets/icons/ic_home.svg';
   static get icCamera => 'assets/icons/ic_camera.svg';
+  static get icDiagram => 'assets/icons/ic_diagram.svg';
   static get icChart => 'assets/icons/ic_chart.svg';
   static get icWarning => 'assets/icons/ic_warning.svg';
   static get icReport => 'assets/icons/ic_report.svg';

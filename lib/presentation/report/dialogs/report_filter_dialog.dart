@@ -7,19 +7,27 @@ import 'package:thermal_mobile/presentation/models/filter_params.dart';
 typedef MachineItemsLoader =
     Future<List<DropdownMenuItem<int>>> Function(int? areaId);
 
-/// Dialog filter cho màn Báo cáo (khu vực, thiết bị, khoảng thời gian)
+/// Callback để load danh sách bộ phận theo danh sách machineIds
+typedef ComponentItemsLoader =
+    Future<List<DropdownMenuItem<int>>> Function(List<int> machineIds);
+
+/// Dialog filter cho màn Báo cáo (khu vực, thiết bị, bộ phận, khoảng thời gian)
 class ReportFilterDialog extends StatefulWidget {
   final ReportFilterParams initialParams;
   final List<DropdownMenuItem<int>> areaItems;
   final List<DropdownMenuItem<int>> machineItems;
+  final List<DropdownMenuItem<int>> componentItems;
   final MachineItemsLoader? onAreaChanged;
+  final ComponentItemsLoader? onMachineChanged;
 
   const ReportFilterDialog({
     super.key,
     required this.initialParams,
     required this.areaItems,
     required this.machineItems,
+    this.componentItems = const [],
     this.onAreaChanged,
+    this.onMachineChanged,
   });
 
   /// Show as bottom sheet
@@ -28,7 +36,9 @@ class ReportFilterDialog extends StatefulWidget {
     required ReportFilterParams initialParams,
     required List<DropdownMenuItem<int>> areaItems,
     required List<DropdownMenuItem<int>> machineItems,
+    List<DropdownMenuItem<int>> componentItems = const [],
     MachineItemsLoader? onAreaChanged,
+    ComponentItemsLoader? onMachineChanged,
   }) {
     return showModalBottomSheet<ReportFilterParams>(
       context: context,
@@ -38,7 +48,9 @@ class ReportFilterDialog extends StatefulWidget {
         initialParams: initialParams,
         areaItems: areaItems,
         machineItems: machineItems,
+        componentItems: componentItems,
         onAreaChanged: onAreaChanged,
+        onMachineChanged: onMachineChanged,
       ),
     );
   }
@@ -51,9 +63,12 @@ class _ReportFilterDialogState extends State<ReportFilterDialog> {
   late DateTime fromTime;
   late DateTime toTime;
   int? areaId;
-  int? machineId;
+  Set<int> _selectedMachineIds = {};
   List<DropdownMenuItem<int>> _currentMachineItems = [];
   bool _isLoadingMachines = false;
+  List<DropdownMenuItem<int>> _currentComponentItems = [];
+  bool _isLoadingComponents = false;
+  Set<int> _selectedComponentIds = {};
 
   @override
   void initState() {
@@ -63,16 +78,21 @@ class _ReportFilterDialogState extends State<ReportFilterDialog> {
         DateTime.now().subtract(const Duration(days: 2));
     toTime = widget.initialParams.toTime ?? DateTime.now();
     areaId = widget.initialParams.areaId;
-    machineId = widget.initialParams.machineId;
+    _selectedMachineIds = (widget.initialParams.machineIds ?? []).toSet();
     _currentMachineItems = widget.machineItems;
+    _currentComponentItems = widget.componentItems;
+    _selectedComponentIds = (widget.initialParams.machineComponentIds ?? [])
+        .toSet();
   }
 
   Future<void> _onAreaChanged(int? newAreaId) async {
     setState(() {
       areaId = newAreaId;
-      machineId = null;
+      _selectedMachineIds = {};
       _currentMachineItems = [];
       _isLoadingMachines = true;
+      _currentComponentItems = [];
+      _selectedComponentIds = {};
     });
 
     if (widget.onAreaChanged != null) {
@@ -98,6 +118,53 @@ class _ReportFilterDialogState extends State<ReportFilterDialog> {
     }
   }
 
+  Future<void> _toggleMachine(int machineId) async {
+    setState(() {
+      if (_selectedMachineIds.contains(machineId)) {
+        _selectedMachineIds.remove(machineId);
+      } else {
+        _selectedMachineIds.add(machineId);
+      }
+      _currentComponentItems = [];
+      _selectedComponentIds = {};
+      _isLoadingComponents = true;
+    });
+
+    if (widget.onMachineChanged != null) {
+      try {
+        final newComponentItems = await widget.onMachineChanged!(
+          _selectedMachineIds.toList(),
+        );
+        if (mounted) {
+          setState(() {
+            _currentComponentItems = newComponentItems;
+            _isLoadingComponents = false;
+          });
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _isLoadingComponents = false;
+          });
+        }
+      }
+    } else {
+      setState(() {
+        _isLoadingComponents = false;
+      });
+    }
+  }
+
+  void _toggleComponent(int componentId) {
+    setState(() {
+      if (_selectedComponentIds.contains(componentId)) {
+        _selectedComponentIds.remove(componentId);
+      } else {
+        _selectedComponentIds.add(componentId);
+      }
+    });
+  }
+
   Future<void> _pickDate({required bool isFrom}) async {
     final picked = await showDatePicker(
       context: context,
@@ -121,8 +188,10 @@ class _ReportFilterDialogState extends State<ReportFilterDialog> {
       fromTime = DateTime.now().subtract(const Duration(days: 2));
       toTime = DateTime.now();
       areaId = null;
-      machineId = null;
+      _selectedMachineIds = {};
       _currentMachineItems = [];
+      _currentComponentItems = [];
+      _selectedComponentIds = {};
     });
   }
 
@@ -134,11 +203,18 @@ class _ReportFilterDialogState extends State<ReportFilterDialog> {
         break;
       }
     }
-    String? machineName;
+
+    final machineNames = <String>[];
     for (final item in _currentMachineItems) {
-      if (item.value == machineId) {
-        machineName = (item.child as Text).data;
-        break;
+      if (_selectedMachineIds.contains(item.value)) {
+        machineNames.add((item.child as Text).data ?? '');
+      }
+    }
+
+    final componentNames = <String>[];
+    for (final item in _currentComponentItems) {
+      if (_selectedComponentIds.contains(item.value)) {
+        componentNames.add((item.child as Text).data ?? '');
       }
     }
 
@@ -148,8 +224,14 @@ class _ReportFilterDialogState extends State<ReportFilterDialog> {
         toTime: toTime,
         areaId: areaId,
         areaName: areaName,
-        machineId: machineId,
-        machineName: machineName,
+        machineIds: _selectedMachineIds.isEmpty
+            ? null
+            : _selectedMachineIds.toList(),
+        machineNames: machineNames.isEmpty ? null : machineNames,
+        machineComponentIds: _selectedComponentIds.isEmpty
+            ? null
+            : _selectedComponentIds.toList(),
+        machineComponentNames: componentNames.isEmpty ? null : componentNames,
       ),
     );
   }
@@ -280,12 +362,78 @@ class _ReportFilterDialogState extends State<ReportFilterDialog> {
                           child: CircularProgressIndicator(),
                         ),
                       )
+                    else if (_currentMachineItems.isEmpty)
+                      Text(
+                        'Chọn khu vực để xem danh sách thiết bị',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey.shade500,
+                        ),
+                      )
                     else
-                      _DropdownField<int>(
-                        value: machineId,
-                        hint: 'Chọn thiết bị',
-                        items: _currentMachineItems,
-                        onChanged: (v) => setState(() => machineId = v),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: _currentMachineItems.map((item) {
+                          final label = (item.child as Text).data ?? '';
+                          return _ComponentChip(
+                            label: label,
+                            isSelected: _selectedMachineIds.contains(
+                              item.value,
+                            ),
+                            onTap: () => _toggleMachine(item.value as int),
+                          );
+                        }).toList(),
+                      ),
+
+                    // Component (bộ phận)
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Bộ phận',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    if (_isLoadingComponents)
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(16),
+                          child: CircularProgressIndicator(),
+                        ),
+                      )
+                    else if (_selectedMachineIds.isEmpty)
+                      Text(
+                        'Chọn thiết bị để xem danh sách bộ phận',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey.shade500,
+                        ),
+                      )
+                    else if (_currentComponentItems.isEmpty)
+                      Text(
+                        'Thiết bị này không có bộ phận',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey.shade500,
+                        ),
+                      )
+                    else
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: _currentComponentItems.map((item) {
+                          final label = (item.child as Text).data ?? '';
+                          return _ComponentChip(
+                            label: label,
+                            isSelected: _selectedComponentIds.contains(
+                              item.value,
+                            ),
+                            onTap: () => _toggleComponent(item.value as int),
+                          );
+                        }).toList(),
                       ),
                   ],
                 ),
@@ -322,6 +470,59 @@ class _ReportFilterDialogState extends State<ReportFilterDialog> {
                     ),
                   ),
                 ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Multi-select chip for machine components
+class _ComponentChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _ComponentChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.primaryDark.withOpacity(0.25)
+              : AppColors.backgroundDark,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? AppColors.primaryDark : Colors.grey.shade700,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (isSelected) ...[
+              const Icon(
+                Icons.check_circle,
+                size: 14,
+                color: AppColors.primaryDark,
+              ),
+              const SizedBox(width: 6),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                color: isSelected ? AppColors.primaryDark : Colors.grey.shade300,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
               ),
             ),
           ],

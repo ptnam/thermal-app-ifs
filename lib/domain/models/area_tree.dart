@@ -9,6 +9,7 @@ class AreaTree {
   final String code;
   final int id;
   final String mapType;
+  final int? mapTypeId;
   final String? photoPath;
   final double longitude;
   final double latitude;
@@ -22,6 +23,12 @@ class AreaTree {
   final DateTime createdAt;
   final DateTime? updatedAt;
   final DateTime? deletedAt;
+  final int totalWarnings;
+  final double? thresholdTemperature;
+  final double? environmentTemperature;
+  final String? comparationDataMode;
+  final int? provinceId;
+  final String? emapPhotoPath;
 
   const AreaTree({
     required this.uniqueId,
@@ -30,6 +37,7 @@ class AreaTree {
     required this.code,
     required this.id,
     required this.mapType,
+    this.mapTypeId,
     required this.photoPath,
     required this.longitude,
     required this.latitude,
@@ -43,6 +51,12 @@ class AreaTree {
     required this.createdAt,
     required this.updatedAt,
     required this.deletedAt,
+    this.totalWarnings = 0,
+    this.thresholdTemperature,
+    this.environmentTemperature,
+    this.comparationDataMode,
+    this.provinceId,
+    this.emapPhotoPath,
   });
 
   /// Create a copy with optional fields replaced
@@ -53,6 +67,7 @@ class AreaTree {
     String? code,
     int? id,
     String? mapType,
+    int? mapTypeId,
     String? photoPath,
     double? longitude,
     double? latitude,
@@ -66,6 +81,12 @@ class AreaTree {
     DateTime? createdAt,
     DateTime? updatedAt,
     DateTime? deletedAt,
+    int? totalWarnings,
+    double? thresholdTemperature,
+    double? environmentTemperature,
+    String? comparationDataMode,
+    int? provinceId,
+    String? emapPhotoPath,
   }) {
     return AreaTree(
       uniqueId: uniqueId ?? this.uniqueId,
@@ -74,6 +95,7 @@ class AreaTree {
       code: code ?? this.code,
       id: id ?? this.id,
       mapType: mapType ?? this.mapType,
+      mapTypeId: mapTypeId ?? this.mapTypeId,
       photoPath: photoPath ?? this.photoPath,
       longitude: longitude ?? this.longitude,
       latitude: latitude ?? this.latitude,
@@ -87,6 +109,13 @@ class AreaTree {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       deletedAt: deletedAt ?? this.deletedAt,
+      totalWarnings: totalWarnings ?? this.totalWarnings,
+      thresholdTemperature: thresholdTemperature ?? this.thresholdTemperature,
+      environmentTemperature:
+          environmentTemperature ?? this.environmentTemperature,
+      comparationDataMode: comparationDataMode ?? this.comparationDataMode,
+      provinceId: provinceId ?? this.provinceId,
+      emapPhotoPath: emapPhotoPath ?? this.emapPhotoPath,
     );
   }
 

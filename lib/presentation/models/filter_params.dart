@@ -121,16 +121,20 @@ class ReportFilterParams {
   final DateTime? toTime;
   final int? areaId;
   final String? areaName;
-  final int? machineId;
-  final String? machineName;
+  final List<int>? machineIds;
+  final List<String>? machineNames;
+  final List<int>? machineComponentIds;
+  final List<String>? machineComponentNames;
 
   const ReportFilterParams({
     this.fromTime,
     this.toTime,
     this.areaId,
     this.areaName,
-    this.machineId,
-    this.machineName,
+    this.machineIds,
+    this.machineNames,
+    this.machineComponentIds,
+    this.machineComponentNames,
   });
 
   ReportFilterParams copyWith({
@@ -138,18 +142,31 @@ class ReportFilterParams {
     DateTime? toTime,
     int? areaId,
     String? areaName,
-    int? machineId,
-    String? machineName,
+    List<int>? machineIds,
+    List<String>? machineNames,
+    List<int>? machineComponentIds,
+    List<String>? machineComponentNames,
     bool clearAreaId = false,
-    bool clearMachineId = false,
+    bool clearMachineIds = false,
+    bool clearMachineComponentIds = false,
   }) {
     return ReportFilterParams(
       fromTime: fromTime ?? this.fromTime,
       toTime: toTime ?? this.toTime,
       areaId: clearAreaId ? null : (areaId ?? this.areaId),
       areaName: clearAreaId ? null : (areaName ?? this.areaName),
-      machineId: clearMachineId ? null : (machineId ?? this.machineId),
-      machineName: clearMachineId ? null : (machineName ?? this.machineName),
+      machineIds: (clearAreaId || clearMachineIds)
+          ? null
+          : (machineIds ?? this.machineIds),
+      machineNames: (clearAreaId || clearMachineIds)
+          ? null
+          : (machineNames ?? this.machineNames),
+      machineComponentIds: (clearAreaId || clearMachineIds || clearMachineComponentIds)
+          ? null
+          : (machineComponentIds ?? this.machineComponentIds),
+      machineComponentNames: (clearAreaId || clearMachineIds || clearMachineComponentIds)
+          ? null
+          : (machineComponentNames ?? this.machineComponentNames),
     );
   }
 

@@ -14,6 +14,7 @@ import 'package:video_player/video_player.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 import '../../bloc/area/area_bloc.dart';
 import '../../bloc/camera/camera_stream_bloc.dart';
+import 'camera_pin_settings_screen.dart';
 import 'camera_stream_page.dart';
 
 /// Global controller to manage all camera tiles
@@ -57,6 +58,8 @@ class CameraScreen extends StatefulWidget {
 class _CameraScreenState extends State<CameraScreen> {
   AreaTree? _selectedArea;
   List<AreaTree> _flattenedAreas = [];
+  // "Ghim" is always the first tab, selected by default.
+  bool _isPinnedTabSelected = true;
 
   @override
   void initState() {
@@ -101,6 +104,32 @@ class _CameraScreenState extends State<CameraScreen> {
       cameras.addAll(_getCamerasForArea(child));
     }
     return cameras;
+  }
+
+  /// Get all pinned cameras across every area in the tree.
+  /// `_flattenedAreas` already contains every node exactly once, so summing
+  /// each node's own `.cameras` covers the whole tree without duplicates.
+  List<CameraEntity> _getPinnedCameras() {
+    return _flattenedAreas
+        .expand((area) => area.cameras)
+        .where((camera) => camera.isPined)
+        .toList();
+  }
+
+  Future<void> _openCameraSettings() async {
+    final saved = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => const CameraPinSettingsScreen()),
+    );
+    if (saved == true && mounted) {
+      setState(() {
+        _flattenedAreas = [];
+      });
+      try {
+        context.read<AreaBloc>().add(const FetchAreaTreeEvent());
+      } catch (e) {
+        // BLoC already closed, ignore
+      }
+    }
   }
 
   @override
@@ -149,6 +178,13 @@ class _CameraScreenState extends State<CameraScreen> {
                 fontWeight: FontWeight.w600,
               ),
             ),
+            actions: [
+              IconButton(
+                onPressed: _openCameraSettings,
+                icon: const Icon(Icons.settings, color: Colors.white),
+                tooltip: 'Cài đặt camera',
+              ),
+            ],
             bottom: const PreferredSize(
               preferredSize: Size.fromHeight(16),
               child: SizedBox.shrink(),
@@ -284,13 +320,15 @@ class _CameraScreenState extends State<CameraScreen> {
               );
             }
 
-            final cameras = _selectedArea != null
+            final cameras = _isPinnedTabSelected
+                ? _getPinnedCameras()
+                : _selectedArea != null
                 ? _getCamerasForArea(_selectedArea!)
                 : <CameraEntity>[];
 
             return Column(
               children: [
-                // Horizontal area selector
+                // Horizontal area selector ("Ghim" tab first, then areas)
                 Container(
                   height: 60,
                   decoration: BoxDecoration(
@@ -307,10 +345,25 @@ class _CameraScreenState extends State<CameraScreen> {
                       horizontal: 12,
                       vertical: 8,
                     ),
-                    itemCount: _flattenedAreas.length,
+                    itemCount: _flattenedAreas.length + 1,
                     itemBuilder: (context, index) {
-                      final area = _flattenedAreas[index];
-                      final isSelected = _selectedArea?.id == area.id;
+                      if (index == 0) {
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: _PinnedTabChip(
+                            isSelected: _isPinnedTabSelected,
+                            onTap: () {
+                              setState(() {
+                                _isPinnedTabSelected = true;
+                              });
+                            },
+                          ),
+                        );
+                      }
+
+                      final area = _flattenedAreas[index - 1];
+                      final isSelected =
+                          !_isPinnedTabSelected && _selectedArea?.id == area.id;
 
                       return Padding(
                         padding: const EdgeInsets.only(right: 8),
@@ -319,6 +372,7 @@ class _CameraScreenState extends State<CameraScreen> {
                           isSelected: isSelected,
                           onTap: () {
                             setState(() {
+                              _isPinnedTabSelected = false;
                               _selectedArea = area;
                             });
                           },
@@ -359,7 +413,9 @@ class _CameraScreenState extends State<CameraScreen> {
                                   ),
                                   const SizedBox(height: 20),
                                   Text(
-                                    'Không có camera',
+                                    _isPinnedTabSelected
+                                        ? 'Chưa có camera ghim'
+                                        : 'Không có camera',
                                     style: Theme.of(context)
                                         .textTheme
                                         .titleLarge
@@ -370,7 +426,9 @@ class _CameraScreenState extends State<CameraScreen> {
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    'Khu vực "${_selectedArea?.name}" chưa có camera nào',
+                                    _isPinnedTabSelected
+                                        ? 'Ghim camera để xem nhanh tại đây'
+                                        : 'Khu vực "${_selectedArea?.name}" chưa có camera nào',
                                     style: Theme.of(context)
                                         .textTheme
                                         .bodyMedium
@@ -384,7 +442,9 @@ class _CameraScreenState extends State<CameraScreen> {
                             ),
                           )
                         : ListView.builder(
-                            key: ValueKey(_selectedArea?.id),
+                            key: ValueKey(
+                              _isPinnedTabSelected ? 'pinned' : _selectedArea?.id,
+                            ),
                             padding: const EdgeInsets.symmetric(
                               vertical: 8,
                               horizontal: 12,
@@ -394,7 +454,9 @@ class _CameraScreenState extends State<CameraScreen> {
                               return CameraTile(
                                 key: ValueKey(cameras[index].id),
                                 camera: cameras[index],
-                                areaName: _selectedArea?.name,
+                                areaName: _isPinnedTabSelected
+                                    ? cameras[index].areaName
+                                    : _selectedArea?.name,
                               );
                             },
                           ),
@@ -411,6 +473,51 @@ class _CameraScreenState extends State<CameraScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+/// Pinned Tab Chip Widget - first tab, shows pinned cameras across all areas
+class _PinnedTabChip extends StatelessWidget {
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _PinnedTabChip({required this.isSelected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected ? const Color(0xFF5B6FE5) : Colors.transparent,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.push_pin,
+                size: 16,
+                color: isSelected ? Colors.white : const Color(0xFF94A3B8),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'Ghim',
+                style: TextStyle(
+                  color: isSelected ? Colors.white : const Color(0xFF94A3B8),
+                  fontSize: 14,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

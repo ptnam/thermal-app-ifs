@@ -53,6 +53,8 @@ abstract class IThermalDataRepository {
   );
 
   /// Get thermal data details for multiple components
+  ///
+  /// [dataMode] - Aggregation mode: 1 = Max, 2 = Min, 3 = Avg
   Future<Either<ApiError, ThermalDataMultiEntity>> getDetailThermalDataMulti({
     required int areaId,
     required List<int> machineIds,
@@ -62,6 +64,7 @@ abstract class IThermalDataRepository {
     required String endDate,
     required int userId,
     int id = 0,
+    int dataMode = 1,
   });
 
   /// Get environment thermal data by area

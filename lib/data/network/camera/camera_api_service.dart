@@ -261,19 +261,20 @@ class CameraApiService {
     );
   }
 
-  /// Save camera favourite setting
-  Future<ApiResult<CameraSettingDto>> saveFavourite({
-    required FavouriteCameraRequest request,
+  /// Save the full pinned-camera selection for the current user.
+  /// No mapper: the caller only needs success/failure and re-fetches the
+  /// area tree afterwards to pick up the updated `isPined` flags.
+  Future<ApiResult<void>> savePinnedCameras({
+    required List<int> cameraIds,
     required String accessToken,
   }) async {
-    _logger.info('Saving camera favourite: cameraId=${request.cameraId}');
-    return _apiClient.send<CameraSettingDto>(
+    _logger.info('Saving pinned cameras: cameraIds=$cameraIds');
+    return _apiClient.send<void>(
       request: (dio) => dio.post<Map<String, dynamic>>(
         _settingsEndpoints.saveSettings,
-        data: request.toJson(),
+        data: SaveCameraSettingsRequest(cameraIds: cameraIds).toJson(),
         options: _authorizedOptions(accessToken),
       ),
-      mapper: (json) => CameraSettingDto.fromJson(json),
     );
   }
 

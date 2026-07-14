@@ -38,6 +38,9 @@ class ReportPageState extends State<ReportPage> {
   ReportFilterParams _reportFilter = ReportFilterParams.defaultFilter();
   MachineSettingEntity? _lastSettings;
 
+  /// Chart aggregation mode: 1 = Max, 2 = Min, 3 = Avg
+  int _dataMode = 1;
+
   @override
   void initState() {
     super.initState();
@@ -78,11 +81,28 @@ class ReportPageState extends State<ReportPage> {
   }
 
   Future<List<DropdownMenuItem<int>>> _getMachineItems(int? areaId) async {
+    if (areaId == null) return [];
     final accessToken = await _getAccessToken();
     final service = getIt<MachineApiService>();
     final result = await service.getAll(
       accessToken: accessToken,
       areaId: areaId,
+    );
+    final list = result.data ?? <ShortenBaseDto>[];
+    return list
+        .map((e) => DropdownMenuItem<int>(value: e.id, child: Text(e.name)))
+        .toList();
+  }
+
+  Future<List<DropdownMenuItem<int>>> _getComponentItems(
+    List<int> machineIds,
+  ) async {
+    if (machineIds.isEmpty) return [];
+    final accessToken = await _getAccessToken();
+    final service = getIt<MachineApiService>();
+    final result = await service.getMultiComponents(
+      machineIds: machineIds,
+      accessToken: accessToken,
     );
     final list = result.data ?? <ShortenBaseDto>[];
     return list
@@ -103,28 +123,41 @@ class ReportPageState extends State<ReportPage> {
     _thermalDataBloc.add(
       LoadDetailThermalDataMultiEvent(
         areaId: filter.areaId ?? settings.areaId ?? 0,
-        machineIds: filter.machineId != null
-            ? [filter.machineId!]
+        machineIds: (filter.machineIds != null && filter.machineIds!.isNotEmpty)
+            ? filter.machineIds!
             : (settings.machineIds ?? []),
-        machineComponentIds: settings.machineComponentIds ?? [],
+        machineComponentIds:
+            filter.machineComponentIds ?? settings.machineComponentIds ?? [],
         reportDate: dateFormat.format(toTime),
         startDate: dateTimeFormat.format(fromTime),
         endDate: dateTimeFormat.format(toTime),
         userId: settings.userId ?? 0,
+        dataMode: _dataMode,
       ),
     );
+  }
+
+  void _onDataModeChanged(int dataMode) {
+    if (dataMode == _dataMode) return;
+    setState(() => _dataMode = dataMode);
+    _applyReportFilter(_reportFilter);
   }
 
   Future<void> _onFilterTap(BuildContext context) async {
     final areaItems = await _getAreaItems();
     final machineItems = await _getMachineItems(_reportFilter.areaId);
+    final componentItems = await _getComponentItems(
+      _reportFilter.machineIds ?? [],
+    );
     if (!context.mounted) return;
     final result = await ReportFilterDialog.show(
       context: context,
       initialParams: _reportFilter,
       areaItems: areaItems,
       machineItems: machineItems,
+      componentItems: componentItems,
       onAreaChanged: _getMachineItems,
+      onMachineChanged: _getComponentItems,
     );
     if (result != null) {
       setState(() => _reportFilter = result);
@@ -168,6 +201,7 @@ class ReportPageState extends State<ReportPage> {
                 startDate: startDate,
                 endDate: endDate,
                 userId: settings.userId ?? 0,
+                dataMode: _dataMode,
               ),
             );
           }
@@ -269,6 +303,8 @@ class ReportPageState extends State<ReportPage> {
                               showGrid: true,
                               showLegend: true,
                               onFilterTap: () => _onFilterTap(context),
+                              dataMode: _dataMode,
+                              onDataModeChanged: _onDataModeChanged,
                             ),
                             const SizedBox(height: 24),
                             BlocBuilder<NotificationBloc, NotificationState>(

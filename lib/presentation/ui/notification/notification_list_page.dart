@@ -256,10 +256,12 @@ class NotificationCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
 
-                // Temperature Values Row
-                Row(
+                // Device info chips - all on the same row, wrapping if needed
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
                   children: [
-                    if (item.machineName != null) ...[
+                    if (item.machineName != null)
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 10,
@@ -271,6 +273,7 @@ class NotificationCard extends StatelessWidget {
                           border: Border.all(color: const Color(0xFF334155)),
                         ),
                         child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             const Icon(
                               Icons.memory,
@@ -289,9 +292,7 @@ class NotificationCard extends StatelessWidget {
                           ],
                         ),
                       ),
-                      const SizedBox(width: 8),
-                    ],
-                    if (item.componentValue != null) ...[
+                    if (item.componentValue != null)
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 10,
@@ -303,6 +304,7 @@ class NotificationCard extends StatelessWidget {
                           border: Border.all(color: const Color(0xFF334155)),
                         ),
                         child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             const Icon(
                               Icons.thermostat,
@@ -321,86 +323,78 @@ class NotificationCard extends StatelessWidget {
                           ],
                         ),
                       ),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: 12),
-
-                // Additional temp value if exists
-                if (item.compareValue != null)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1E293B),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: const Color(0xFF334155)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.compare_arrows,
-                            size: 14,
-                            color: Color(0xFFFBBF24),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            '${item.compareValue?.toStringAsFixed(1)}°C',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w500,
+                    if (item.compareValue != null)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1E293B),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: const Color(0xFF334155)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.compare_arrows,
+                              size: 14,
+                              color: Color(0xFFFBBF24),
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                // Comparison target (Đối tượng so sánh) if exists
-                if (item.compareComponent != null)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1E293B),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: const Color(0xFF334155)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.compare,
-                            size: 14,
-                            color: Color(0xFF60A5FA),
-                          ),
-                          const SizedBox(width: 6),
-                          Flexible(
-                            child: Text(
-                              item.compareComponent ?? '',
+                            const SizedBox(width: 6),
+                            Text(
+                              '${item.compareValue?.toStringAsFixed(1)}°C',
                               style: const TextStyle(
                                 fontSize: 13,
                                 color: Colors.white,
                                 fontWeight: FontWeight.w500,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  ),
+                    if (item.compareComponent != null)
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 200),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1E293B),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: const Color(0xFF334155)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.compare,
+                                size: 14,
+                                color: Color(0xFF60A5FA),
+                              ),
+                              const SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  item.compareComponent ?? '',
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 12),
 
                 // Location Row
                 Row(

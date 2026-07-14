@@ -30,6 +30,7 @@ class CameraEntity {
   final String? thumbnailUrl;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  final bool isPined;
 
   const CameraEntity({
     required this.id,
@@ -48,6 +49,7 @@ class CameraEntity {
     this.thumbnailUrl,
     this.createdAt,
     this.updatedAt,
+    this.isPined = false,
   });
 
   bool get isActive => status == EntityStatus.active;
@@ -73,6 +75,7 @@ class CameraEntity {
     String? thumbnailUrl,
     DateTime? createdAt,
     DateTime? updatedAt,
+    bool? isPined,
   }) {
     return CameraEntity(
       id: id ?? this.id,
@@ -91,6 +94,7 @@ class CameraEntity {
       thumbnailUrl: thumbnailUrl ?? this.thumbnailUrl,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      isPined: isPined ?? this.isPined,
     );
   }
 

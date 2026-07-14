@@ -1,5 +1,25 @@
 import '../../camera/dto/camera_dto.dart';
 
+/// Small {id, code, name} enum-like object embedded in area tree nodes
+/// (e.g. mapTypeObject, statusObject)
+class AreaEnumObjectDto {
+  final int? id;
+  final String? code;
+  final String? name;
+
+  const AreaEnumObjectDto({this.id, this.code, this.name});
+
+  factory AreaEnumObjectDto.fromJson(Map<String, dynamic> json) {
+    return AreaEnumObjectDto(
+      id: json['id'] as int?,
+      code: json['code']?.toString(),
+      name: json['name']?.toString(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {'id': id, 'code': code, 'name': name};
+}
+
 /// DTO for Area Tree data from API
 class AreaTreeDto {
   final String uniqueId;
@@ -21,6 +41,16 @@ class AreaTreeDto {
   final String createdAt;
   final String? updatedAt;
   final String? deletedAt;
+  final int totalWarnings;
+  final double? thresholdTemperature;
+  final double? environmentTemperature;
+  final String? comparationDataMode;
+  final int? provinceId;
+  final Map<String, dynamic>? province;
+  final String? emapPhotoPath;
+  final dynamic emapPosition;
+  final AreaEnumObjectDto? mapTypeObject;
+  final AreaEnumObjectDto? statusObject;
 
   const AreaTreeDto({
     required this.uniqueId,
@@ -42,6 +72,16 @@ class AreaTreeDto {
     required this.createdAt,
     required this.updatedAt,
     required this.deletedAt,
+    required this.totalWarnings,
+    required this.thresholdTemperature,
+    required this.environmentTemperature,
+    required this.comparationDataMode,
+    required this.provinceId,
+    required this.province,
+    required this.emapPhotoPath,
+    required this.emapPosition,
+    required this.mapTypeObject,
+    required this.statusObject,
   });
 
   factory AreaTreeDto.fromJson(Map<String, dynamic> json) {
@@ -82,6 +122,25 @@ class AreaTreeDto {
       createdAt: json['createdAt']?.toString() ?? '',
       updatedAt: json['updatedAt'] as String?,
       deletedAt: json['deletedAt'] as String?,
+      totalWarnings: json['totalWarnings'] as int? ?? 0,
+      thresholdTemperature: (json['thresholdTemperature'] as num?)?.toDouble(),
+      environmentTemperature: (json['environmentTemperature'] as num?)
+          ?.toDouble(),
+      comparationDataMode: json['comparationDataMode']?.toString(),
+      provinceId: json['provinceId'] as int?,
+      province: json['province'] as Map<String, dynamic>?,
+      emapPhotoPath: json['emapPhotoPath'] as String?,
+      emapPosition: json['emapPosition'],
+      mapTypeObject: json['mapTypeObject'] != null
+          ? AreaEnumObjectDto.fromJson(
+              json['mapTypeObject'] as Map<String, dynamic>,
+            )
+          : null,
+      statusObject: json['statusObject'] != null
+          ? AreaEnumObjectDto.fromJson(
+              json['statusObject'] as Map<String, dynamic>,
+            )
+          : null,
     );
   }
 
@@ -107,6 +166,16 @@ class AreaTreeDto {
     'createdAt': createdAt,
     'updatedAt': updatedAt,
     'deletedAt': deletedAt,
+    'totalWarnings': totalWarnings,
+    'thresholdTemperature': thresholdTemperature,
+    'environmentTemperature': environmentTemperature,
+    'comparationDataMode': comparationDataMode,
+    'provinceId': provinceId,
+    'province': province,
+    'emapPhotoPath': emapPhotoPath,
+    'emapPosition': emapPosition,
+    'mapTypeObject': mapTypeObject?.toJson(),
+    'statusObject': statusObject?.toJson(),
   };
 
   @override

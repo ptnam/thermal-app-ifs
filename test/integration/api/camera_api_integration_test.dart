@@ -467,13 +467,13 @@ Nhóm API này phục vụ cho việc quản lý camera trong hệ thống giám
     );
 
     test(
-      'saveFavourite - should pin/unpin camera',
+      'savePinnedCameras - should save pinned camera selection',
       () async {
         // First get a camera ID to pin
         final allResult = await service.getAllShorten(accessToken: accessToken);
 
         if (!allResult.isSuccess || allResult.data?.isEmpty == true) {
-          print('⏭️  Skipping saveFavourite test (no cameras available)');
+          print('⏭️  Skipping savePinnedCameras test (no cameras available)');
           return;
         }
 
@@ -482,15 +482,12 @@ Nhóm API này phục vụ cho việc quản lý camera trong hệ thống giám
         final stopwatch = Stopwatch()..start();
 
         print('\n${'─' * 60}');
-        print('⭐ TEST: saveFavourite (pin camera)');
+        print('⭐ TEST: savePinnedCameras (pin camera)');
         print('─' * 60);
         print('Camera ID: $firstCameraId');
 
-        final result = await service.saveFavourite(
-          request: FavouriteCameraRequest(
-            cameraId: firstCameraId,
-            isFavourite: true,
-          ),
+        final result = await service.savePinnedCameras(
+          cameraIds: [firstCameraId],
           accessToken: accessToken,
         );
 
@@ -498,35 +495,17 @@ Nhóm API này phục vụ cho việc quản lý camera trong hệ thống giám
 
         print('\n📊 RESULT: ${result.isSuccess ? '✅ SUCCESS' : '❌ FAILED'}');
 
-        if (result.isSuccess && result.data != null) {
-          final settings = result.data!;
-          print('\n⭐ Updated Settings:');
-          print('  Pinned Camera IDs: ${settings.pinnedCameraIds}');
-          print(
-            '  Is Pinned: ${settings.pinnedCameraIds?.contains(firstCameraId) ?? false}',
-          );
-          print('  Total Pinned: ${settings.pinnedCameraIds?.length ?? 0}');
+        testResults.add(
+          TestResult(
+            testName: 'savePinnedCameras',
+            isSuccess: result.isSuccess,
+            duration: Duration(milliseconds: stopwatch.elapsedMilliseconds),
+            errorMessage: result.isSuccess ? null : result.error?.message,
+          ),
+        );
 
-          expect(settings.pinnedCameraIds?.contains(firstCameraId), true);
-
-          testResults.add(
-            TestResult(
-              testName: 'saveFavourite',
-              isSuccess: true,
-              duration: Duration(milliseconds: stopwatch.elapsedMilliseconds),
-            ),
-          );
-        } else {
+        if (!result.isSuccess) {
           print('\n❌ Error: ${result.error?.message}');
-
-          testResults.add(
-            TestResult(
-              testName: 'saveFavourite',
-              isSuccess: false,
-              duration: Duration(milliseconds: stopwatch.elapsedMilliseconds),
-              errorMessage: result.error?.message,
-            ),
-          );
         }
 
         print('⏱️  Duration: ${stopwatch.elapsedMilliseconds}ms');

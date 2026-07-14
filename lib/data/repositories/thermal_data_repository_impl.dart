@@ -263,6 +263,7 @@ class ThermalDataRepositoryImpl implements IThermalDataRepository {
     required String endDate,
     required int userId,
     int id = 0,
+    int dataMode = 1,
   }) async {
     try {
       final token = await _getAccessToken();
@@ -275,6 +276,7 @@ class ThermalDataRepositoryImpl implements IThermalDataRepository {
         endDate: endDate,
         userId: userId,
         id: id,
+        dataMode: dataMode,
         accessToken: token,
       );
 

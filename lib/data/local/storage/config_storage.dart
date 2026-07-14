@@ -14,6 +14,10 @@ class ConfigStorage {
   static const String _keySelectedAreaId = 'selected_area_id';
   static const String _keySelectedAreaName = 'selected_area_name';
 
+  static const String _keySelectedDiagramAreaId = 'selected_diagram_area_id';
+  static const String _keySelectedDiagramAreaName =
+      'selected_diagram_area_name';
+
   final SharedPreferences _prefs;
 
   ConfigStorage(this._prefs);
@@ -43,6 +47,36 @@ class ConfigStorage {
       _prefs.remove(_keySelectedAreaName),
     ]);
   }
+
+  /// Get selected diagram (sơ đồ) area id (nullable)
+  int? getSelectedDiagramAreaId() {
+    return _prefs.getInt(_keySelectedDiagramAreaId);
+  }
+
+  /// Get selected diagram (sơ đồ) area name (nullable)
+  String? getSelectedDiagramAreaName() {
+    return _prefs.getString(_keySelectedDiagramAreaName);
+  }
+
+  /// Save selected diagram (sơ đồ) area
+  Future<void> saveSelectedDiagramArea({
+    required int id,
+    required String name,
+  }) async {
+    await Future.wait([
+      _prefs.setInt(_keySelectedDiagramAreaId, id),
+      _prefs.setString(_keySelectedDiagramAreaName, name),
+    ]);
+  }
+
+  /// Clear selected diagram (sơ đồ) area
+  Future<void> clearSelectedDiagramArea() async {
+    await Future.wait([
+      _prefs.remove(_keySelectedDiagramAreaId),
+      _prefs.remove(_keySelectedDiagramAreaName),
+    ]);
+  }
+
   /// Lấy domain đã lưu hoặc trả về mặc định
   String getDomain() {
     return _prefs.getString(_keyDomain) ?? defaultDomain;

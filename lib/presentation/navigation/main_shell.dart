@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:thermal_mobile/main.dart' as app_main;
 import 'package:thermal_mobile/presentation/navigation/bottom_navigation.dart';
 import 'package:thermal_mobile/presentation/ui/camera/camera_page.dart';
+import 'package:thermal_mobile/presentation/ui/diagram/diagram_page.dart';
 import 'package:thermal_mobile/presentation/ui/home/home_page.dart';
 import 'package:thermal_mobile/presentation/ui/notification/notification_page.dart';
 import 'package:thermal_mobile/presentation/ui/report/report_page.dart';
@@ -46,6 +47,7 @@ class _MainShellState extends State<MainShell> {
   List<Widget> get _pages => [
     HomePage(key: ValueKey('home_$_authVersion')),
     CameraPage(key: ValueKey('camera_$_authVersion')),
+    DiagramPage(key: ValueKey('diagram_$_authVersion')),
     NotificationPage(key: ValueKey('notification_$_authVersion')),
     ReportPage(key: ValueKey('report_$_authVersion')),
   ];

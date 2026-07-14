@@ -368,6 +368,7 @@ class ThermalDataBloc extends Bloc<ThermalDataEvent, ThermalDataState> {
       endDate: event.endDate,
       userId: event.userId,
       id: event.id,
+      dataMode: event.dataMode,
     );
 
     result.fold(

@@ -28,6 +28,22 @@ class MachineResultEntity {
 
   bool get isMachine => deviceType == 'Machine';
   bool get isSensor => deviceType == 'Sensor';
+
+  MachineResultEntity copyWith({String? level}) {
+    return MachineResultEntity(
+      key: key,
+      machineId: machineId,
+      deviceType: deviceType,
+      deviceTypeName: deviceTypeName,
+      monitorPointIcon: monitorPointIcon,
+      longitude: longitude,
+      latitude: latitude,
+      level: level ?? this.level,
+      code: code,
+      name: name,
+      id: id,
+    );
+  }
 }
 
 /// Evaluation result entity for component status

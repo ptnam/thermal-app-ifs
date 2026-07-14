@@ -59,22 +59,22 @@ class BottomNavigation extends StatelessWidget {
               context,
             ).bottomNavigationBarTheme.unselectedItemColor,
           ),
-          // _buildNavItem(
-          //   context,
-          //   index: 2,
-          //   iconPath: AppIcons.icChart,
-          //   activeIconPath: AppIcons.icChart,
-          //   label: 'Biểu đồ',
-          //   selectedColor: Theme.of(
-          //     context,
-          //   ).bottomNavigationBarTheme.selectedItemColor,
-          //   unselectedColor: Theme.of(
-          //     context,
-          //   ).bottomNavigationBarTheme.unselectedItemColor,
-          // ),
           _buildNavItem(
             context,
             index: 2,
+            iconPath: AppIcons.icDiagram,
+            activeIconPath: AppIcons.icDiagram,
+            label: 'Sơ đồ',
+            selectedColor: Theme.of(
+              context,
+            ).bottomNavigationBarTheme.selectedItemColor,
+            unselectedColor: Theme.of(
+              context,
+            ).bottomNavigationBarTheme.unselectedItemColor,
+          ),
+          _buildNavItem(
+            context,
+            index: 3,
             iconPath: AppIcons.icWarning,
             activeIconPath: AppIcons.icWarning,
             label: 'Sự cố',
@@ -87,7 +87,7 @@ class BottomNavigation extends StatelessWidget {
           ),
           _buildNavItem(
             context,
-            index: 3,
+            index: 4,
             iconPath: AppIcons.icReport,
             activeIconPath: AppIcons.icReport,
             label: 'Báo cáo',

@@ -128,6 +128,7 @@ class LoadDetailThermalDataMultiEvent extends ThermalDataEvent {
   final String endDate;
   final int userId;
   final int id;
+  final int dataMode;
 
   const LoadDetailThermalDataMultiEvent({
     required this.areaId,
@@ -138,6 +139,7 @@ class LoadDetailThermalDataMultiEvent extends ThermalDataEvent {
     required this.endDate,
     required this.userId,
     this.id = 0,
+    this.dataMode = 1,
   });
 
   @override
@@ -150,6 +152,7 @@ class LoadDetailThermalDataMultiEvent extends ThermalDataEvent {
     endDate,
     userId,
     id,
+    dataMode,
   ];
 }
 

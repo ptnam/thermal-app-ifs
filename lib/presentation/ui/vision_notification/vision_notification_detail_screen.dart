@@ -42,109 +42,44 @@ class VisionNotificationDetailScreen extends StatelessWidget {
           children: [
             // Hero Image Section
             if (notification.imagePath.isNotEmpty)
-              Stack(
-                children: [
-                  Hero(
-                    tag: 'notification_image_${notification.id}',
-                    child: Container(
-                      width: double.infinity,
-                      height: 280,
-                      decoration: BoxDecoration(color: const Color(0xFF1A2332)),
-                      child: Image.network(
-                        notification.imagePath,
+              Hero(
+                tag: 'notification_image_${notification.id}',
+                child: Container(
+                  width: double.infinity,
+                  height: 280,
+                  decoration: BoxDecoration(color: const Color(0xFF1A2332)),
+                  child: Image.network(
+                    notification.imagePath,
+                    width: double.infinity,
+                    height: 280,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
                         width: double.infinity,
                         height: 280,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            width: double.infinity,
-                            height: 280,
-                            color: const Color(0xFF1A2332),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.broken_image_outlined,
-                                  size: 64,
-                                  color: Colors.grey.shade600,
-                                ),
-                                const SizedBox(height: 12),
-                                Text(
-                                  'Không thể tải hình ảnh',
-                                  style: TextStyle(
-                                    color: Colors.grey.shade500,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ],
+                        color: const Color(0xFF1A2332),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.broken_image_outlined,
+                              size: 64,
+                              color: Colors.grey.shade600,
                             ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                  // Gradient overlay
-                  Positioned(
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    child: Container(
-                      height: 80,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.transparent,
-                            AppColors.backgroundDark.withOpacity(0.8),
-                            AppColors.backgroundDark,
+                            const SizedBox(height: 12),
+                            Text(
+                              'Không thể tải hình ảnh',
+                              style: TextStyle(
+                                color: Colors.grey.shade500,
+                                fontSize: 14,
+                              ),
+                            ),
                           ],
                         ),
-                      ),
-                    ),
+                      );
+                    },
                   ),
-                  // Warning badge on image
-                  Positioned(
-                    top: 16,
-                    right: 16,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: warningColor.withOpacity(0.9),
-                        borderRadius: BorderRadius.circular(8),
-                        boxShadow: [
-                          BoxShadow(
-                            color: warningColor.withOpacity(0.4),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.warning_amber_rounded,
-                            color: Colors.white,
-                            size: 18,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            notification.warningEventName,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
 
             // Content

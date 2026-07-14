@@ -27,6 +27,7 @@ class GetDetailThermalDataMultiUseCase {
     required String endDate,
     required int userId,
     int id = 0,
+    int dataMode = 1,
   }) {
     return _thermalDataRepository.getDetailThermalDataMulti(
       areaId: areaId,
@@ -37,6 +38,7 @@ class GetDetailThermalDataMultiUseCase {
       endDate: endDate,
       userId: userId,
       id: id,
+      dataMode: dataMode,
     );
   }
 }

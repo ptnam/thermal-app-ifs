@@ -37,6 +37,7 @@ class CameraDto {
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final List<dynamic>? monitorPoints;
+  final bool isPined;
 
   const CameraDto({
     this.id,
@@ -56,16 +57,20 @@ class CameraDto {
     this.createdAt,
     this.updatedAt,
     this.monitorPoints,
+    this.isPined = false,
   });
 
   factory CameraDto.fromJson(Map<String, dynamic> json) {
+    // areaName isn't sent as a top-level field on tree responses; it's
+    // nested under 'area': {"name": ..., "code": ...} there instead.
+    final nestedArea = json['area'] as Map<String, dynamic>?;
     return CameraDto(
       id: json['id'] as int?,
       name: json['name'] as String?,
       code: json['code'] as String?,
       description: json['description'] as String?,
       areaId: json['areaId'] as int?,
-      areaName: json['areaName'] as String?,
+      areaName: json['areaName'] as String? ?? nestedArea?['name'] as String?,
       cameraType: CameraType.fromDynamic(json['cameraType']),
       status: CommonStatus.fromValue(_parseInt(json['status']) ?? 1),
       ipAddress: json['ipAddress'] as String?,
@@ -81,6 +86,7 @@ class CameraDto {
           ? DateTime.tryParse(json['updatedAt'] as String)
           : null,
       monitorPoints: json['monitorPoints'] as List<dynamic>?,
+      isPined: json['isPined'] as bool? ?? false,
     );
   }
 
@@ -99,6 +105,7 @@ class CameraDto {
       if (password != null) 'password': password,
       if (streamUrl != null) 'streamUrl': streamUrl,
       if (thumbnailUrl != null) 'thumbnailUrl': thumbnailUrl,
+      'isPined': isPined,
     };
   }
 
@@ -120,6 +127,7 @@ class CameraDto {
     DateTime? createdAt,
     DateTime? updatedAt,
     List<dynamic>? monitorPoints,
+    bool? isPined,
   }) {
     return CameraDto(
       id: id ?? this.id,
@@ -139,6 +147,7 @@ class CameraDto {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       monitorPoints: monitorPoints ?? this.monitorPoints,
+      isPined: isPined ?? this.isPined,
     );
   }
 }
@@ -205,20 +214,25 @@ class CameraSettingDto {
   }
 }
 
-/// Favourite camera request
-class FavouriteCameraRequest {
-  final int cameraId;
-  final bool isFavourite;
+/// Request to save the full pinned-camera selection for the current user.
+/// Mirrors the exact payload the backend's own web client sends to
+/// POST /api/CameraSettings, e.g. {"flagCommand":3,"cameraIds":[13,2,1],"screenNumber":4}.
+/// `flagCommand`/`screenNumber` are fixed values observed from that request,
+/// not user-configurable - flagCommand selects "save pinned cameras" and
+/// screenNumber identifies the camera list screen.
+class SaveCameraSettingsRequest {
+  static const int _pinCamerasFlagCommand = 3;
+  static const int _cameraScreenNumber = 4;
 
-  const FavouriteCameraRequest({
-    required this.cameraId,
-    required this.isFavourite,
-  });
+  final List<int> cameraIds;
+
+  const SaveCameraSettingsRequest({required this.cameraIds});
 
   Map<String, dynamic> toJson() {
     return {
-      'cameraId': cameraId,
-      'isFavourite': isFavourite,
+      'flagCommand': _pinCamerasFlagCommand,
+      'cameraIds': cameraIds,
+      'screenNumber': _cameraScreenNumber,
     };
   }
 }

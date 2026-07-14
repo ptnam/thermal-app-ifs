@@ -270,6 +270,7 @@ class ThermalDataApiService {
   /// [endDate] - End datetime (yyyy-MM-dd HH:mm:ss)
   /// [userId] - User ID
   /// [id] - Optional ID parameter
+  /// [dataMode] - Aggregation mode: 1 = Max, 2 = Min, 3 = Avg
   /// Returns: Chart data with categories (timestamps) and series
   Future<ApiResult<ThermalDataMultiResponse>> getDetailThermalDataMulti({
     required int areaId,
@@ -280,12 +281,14 @@ class ThermalDataApiService {
     required String endDate,
     required int userId,
     int id = 0,
+    int dataMode = 1,
     required String accessToken,
   }) async {
     _logger.info(
       'Fetching multi-component thermal data: '
       'areaId=$areaId, machineIds=$machineIds, '
-      'componentIds=$machineComponentIds, reportDate=$reportDate',
+      'componentIds=$machineComponentIds, reportDate=$reportDate, '
+      'dataMode=$dataMode',
     );
 
     // Build query parameters with array format (using [] for backend compatibility)
@@ -296,6 +299,7 @@ class ThermalDataApiService {
       'endDate': endDate,
       'userId': userId,
       'id': id,
+      'dataMode': dataMode,
       // Use empty brackets [] for array parameters to match backend expectation
       'machineIds[]': machineIds,
       'machineComponentIds[]': machineComponentIds,
